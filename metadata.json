@@ -1,0 +1,6 @@
+{
+  "name": "NovaX",
+  "description": "NovaX Cloud Mining & Crypto Trading Platform",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
