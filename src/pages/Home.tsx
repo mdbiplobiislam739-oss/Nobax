@@ -283,19 +283,19 @@ export default function Home() {
           <div className="flex gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap">
             <button
               onClick={() => navigate("/finance/deposit")}
-              className="flex-1 min-w-[30%] bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-md border border-white/20 text-xs active:scale-95"
+              className="flex-1 min-w-[30%] bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-md border border-emerald-500/30 text-xs active:scale-95"
             >
               <ArrowDownRight size={14} className="text-emerald-400" /> {t("Deposit")}
             </button>
             <button
               onClick={() => navigate("/finance/withdraw")}
-              className="flex-1 min-w-[30%] bg-white/20 hover:bg-white/30 backdrop-blur-md text-white py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-md border border-white/20 text-xs active:scale-95"
+              className="flex-1 min-w-[30%] bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-md border border-rose-500/30 text-xs active:scale-95"
             >
               <ArrowUpRight size={14} className="text-rose-400" /> {t("Withdraw")}
             </button>
             <button
               onClick={() => navigate("/finance/transfer")}
-              className="flex-1 min-w-[30%] bg-brand-gold/30 hover:bg-brand-gold/40 backdrop-blur-md text-white py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-md border border-brand-gold/30 text-xs active:scale-95"
+              className="flex-1 min-w-[30%] bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-1.5 shadow-md border border-amber-500/30 text-xs active:scale-95"
             >
               <ArrowRightLeft size={14} className="text-amber-300" /> {t("Transfer")}
             </button>
@@ -305,39 +305,39 @@ export default function Home() {
 
       <div className="grid grid-cols-4 sm:grid-cols-4 gap-y-4 gap-x-2">
         <QuickAction
-          icon={<ArrowUpRight />}
+          icon={<ArrowUpRight size={18} />}
           label={t("Send")}
           onClick={() => navigate("/finance/withdraw")}
-          color="text-white"
-          bg="bg-white/10"
+          color="text-rose-400"
+          bg="bg-rose-500/15"
         />
         <QuickAction
-          icon={<ArrowDownRight />}
+          icon={<ArrowDownRight size={18} />}
           label={t("Receive")}
           onClick={() => navigate("/finance/deposit")}
-          color="text-white"
-          bg="bg-white/10"
+          color="text-emerald-400"
+          bg="bg-emerald-500/15"
         />
         <QuickAction
-          icon={<RefreshCcw />}
+          icon={<RefreshCcw size={18} />}
           label={t("Swap")}
           onClick={() => navigate("/swap")}
-          color="text-white"
+          color="text-brand-primary"
           bg="bg-brand-primary/20"
         />
         <QuickAction
-          icon={<Activity />}
+          icon={<Activity size={18} />}
           label={t("History")}
           onClick={() => setIsHistoryOpen(true)}
-          color="text-white"
-          bg="bg-white/10"
+          color="text-indigo-400"
+          bg="bg-indigo-500/15"
         />
         <QuickAction
-          icon={<ShoppingBag />}
-          label={t("Buy")}
+          icon={<ShoppingBag size={18} />}
+          label={t("Shop") || "Shop"}
           onClick={() => navigate("/shop")}
-          color="text-white"
-          bg="bg-white/10"
+          color="text-amber-400"
+          bg="bg-amber-500/15"
         />
         <QuickAction
           icon={<Users />}
@@ -525,14 +525,14 @@ function QuickAction({ icon, label, onClick, color, bg }: any) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-1 sm:gap-2 group w-full"
+      className="flex flex-col items-center gap-1 sm:gap-2 group w-full active:scale-95 transition-transform"
     >
       <div
-        className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full ${bg} ${color} flex items-center justify-center group-hover:scale-105 transition-transform border border-white/10`}
+        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-2xl ${bg} ${color} flex items-center justify-center group-hover:scale-105 transition-all border border-slate-700/50 shadow-md group-hover:border-slate-500/60`}
       >
         {icon}
       </div>
-      <span className="text-[10px] sm:text-[11px] font-medium text-white transition-colors">
+      <span className="text-[10px] sm:text-[11px] font-semibold text-slate-200 group-hover:text-white transition-colors">
         {label}
       </span>
     </button>

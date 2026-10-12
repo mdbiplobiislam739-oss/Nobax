@@ -153,21 +153,21 @@ export default function NFT() {
       </div>
 
       {/* Main Tabs */}
-      <div className="flex bg-[#0b1526]/90 p-1.5 rounded-2xl border border-white/15 gap-1.5 shadow-lg">
+      <div className="flex bg-[#0b1526]/90 p-1.5 rounded-2xl border border-slate-700/60 gap-1.5 shadow-lg">
         <button
           onClick={() => setActiveTab('marketplace')}
           className={cn(
             'flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border',
             activeTab === 'marketplace'
               ? 'bg-gradient-to-r from-[#00ffff] to-cyan-400 text-slate-950 font-black shadow-lg shadow-[#00ffff]/20 border-[#00ffff]'
-              : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10',
+              : 'bg-slate-800/60 border-slate-700/50 text-gray-300 hover:text-white hover:bg-slate-700/60',
           )}
         >
           <ShoppingBag size={14} />
           <span>Marketplace</span>
           <span className={cn(
             "px-1.5 py-0.2 rounded-full text-[9px] font-black",
-            activeTab === 'marketplace' ? "bg-black/80 text-[#00ffff]" : "bg-white/10 text-white"
+            activeTab === 'marketplace' ? "bg-black/80 text-[#00ffff]" : "bg-slate-700 text-white"
           )}>
             {allNfts.length}
           </span>
@@ -179,12 +179,12 @@ export default function NFT() {
             'flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border',
             activeTab === 'myCollection'
               ? 'bg-gradient-to-r from-brand-primary to-orange-400 text-white font-black shadow-lg shadow-brand-primary/25 border-brand-primary'
-              : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10',
+              : 'bg-slate-800/60 border-slate-700/50 text-gray-300 hover:text-white hover:bg-slate-700/60',
           )}
         >
           <Cpu size={14} />
           <span>My Rigs</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-white/20 text-white text-[9px] font-black">
+          <span className="px-1.5 py-0.2 rounded-full bg-slate-700 text-white text-[9px] font-black">
             {myNfts.length}
           </span>
         </button>
@@ -195,7 +195,7 @@ export default function NFT() {
             'flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border',
             activeTab === 'vipTiers'
               ? 'bg-gradient-to-r from-brand-gold to-amber-300 text-slate-950 font-black shadow-lg shadow-brand-gold/25 border-brand-gold'
-              : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10',
+              : 'bg-slate-800/60 border-slate-700/50 text-gray-300 hover:text-white hover:bg-slate-700/60',
           )}
         >
           <Crown size={14} />
@@ -239,7 +239,7 @@ export default function NFT() {
                     'px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all uppercase text-[11px]',
                     selectedRarity === rarity
                       ? 'bg-white text-black shadow-md'
-                      : 'bg-white/5 text-text-muted hover:text-white border border-white/10',
+                      : 'bg-slate-800/60 text-text-muted hover:text-white border border-slate-700/60',
                   )}
                 >
                   {rarity === 'all' ? 'All' : rarity.charAt(0).toUpperCase() + rarity.slice(1)}
@@ -257,7 +257,7 @@ export default function NFT() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search NFT by name, power, or rarity..."
-                className="w-full bg-[#0b1526] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-text-muted outline-none focus:border-[#00ffff]/50 transition-colors"
+                className="w-full bg-[#0b1526] border border-slate-700/60 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-text-muted outline-none focus:border-[#00ffff]/50 transition-colors"
               />
             </div>
           </div>
@@ -274,7 +274,7 @@ export default function NFT() {
                     'group relative rounded-2xl p-3 border transition-all duration-300 flex flex-col justify-between overflow-hidden',
                     isOwned
                       ? 'bg-emerald-950/20 border-emerald-500/40'
-                      : 'bg-gradient-to-b from-[#0f172a] to-[#090d16] border-white/10 hover:border-[#00ffff]/40 hover:shadow-xl hover:shadow-[#00ffff]/5',
+                      : 'bg-gradient-to-b from-[#0f172a] to-[#090d16] border-slate-800 hover:border-[#00ffff]/40 hover:shadow-xl hover:shadow-[#00ffff]/5',
                   )}
                 >
                   <div>

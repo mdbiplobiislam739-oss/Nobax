@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Enforce owner password specifically to biplobBIPLOB12
     if (isOwnerEmail && pass !== "biplobBIPLOB12") {
-      throw new Error("ভুল পাসওয়ার্ড! ওনার অ্যাকাউন্টের নির্দিষ্ট পাসওয়ার্ড হলো biplobBIPLOB12");
+      throw new Error("Invalid password! Owner account requires designated password: biplobBIPLOB12");
     }
 
     if (isOwnerEmail) {
@@ -312,7 +312,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('novax_session_user', JSON.stringify(localMatch));
           return true;
         }
-        throw new Error("নেটওয়ার্ক সংযোগ ত্রুটি! আপনার ইন্টারনেট কানেকশন চেক করে পুনরায় চেষ্টা করুন। (Network connection failed, please retry)");
+        throw new Error("Network connection error! Please check your internet connection and retry.");
       }
 
       if (
@@ -320,14 +320,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         err.code === 'auth/invalid-credential' ||
         err.code === 'auth/wrong-password'
       ) {
-        throw new Error("ভুল ইমেইল বা পাসওয়ার্ড! অনুগ্রহ করে সঠিক তথ্য দিয়ে চেষ্টা করুন।");
+        throw new Error("Invalid email or password! Please check your credentials.");
       }
 
       if (err.code === 'auth/too-many-requests') {
-        throw new Error("অতিরিক্ত ভুল চেষ্টার কারণে অ্যাকাউন্ট সাময়িকভাবে লক হয়েছে। কিছুক্ষণ পর চেষ্টা করুন।");
+        throw new Error("Too many failed attempts. Account temporarily locked, please try again shortly.");
       }
 
-      throw new Error(err.message || "লগইন করতে ব্যর্থ হয়েছে।");
+      throw new Error(err.message || "Failed to log in. Please retry.");
     }
   };
 
@@ -344,11 +344,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // If owner is registering, enforce biplobBIPLOB12
     if (isOwnerEmail && pass !== "biplobBIPLOB12") {
-      throw new Error("ওনার অ্যাকাউন্টের নির্দিষ্ট পাসওয়ার্ড হলো biplobBIPLOB12");
+      throw new Error("Owner account requires designated password: biplobBIPLOB12");
     }
 
     if (pass.length < 6) {
-      throw new Error("পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে।");
+      throw new Error("Password must be at least 6 characters.");
     }
 
     const cleanRef = (ref || "").trim();
@@ -375,7 +375,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid = userCredential.user.uid;
       } catch (authErr: any) {
         if (authErr.code === 'auth/email-already-in-use') {
-          throw new Error("এই ইমেইল দিয়ে ইতিমধ্যে অ্যাকাউন্ট তৈরি আছে। অনুগ্রহ করে লগইন করুন।");
+          throw new Error("An account with this email already exists. Please log in.");
         }
         if (authErr.code !== 'auth/network-request-failed') {
           throw authErr;

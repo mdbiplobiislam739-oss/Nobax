@@ -99,7 +99,7 @@ export default function Game() {
     if (activeTab !== 'crash' && activeTab !== 'rocket') return;
     let frameId: number;
     let prevRoundId = -1;
-    let lastFlyTick = 0;
+    let lastRenderTick = 0;
 
     const mulberry32 = (a: number) => {
       return function() {
@@ -130,9 +130,6 @@ export default function Game() {
         ? (state.gameRocketWinRate !== undefined ? state.gameRocketWinRate : 48)
         : (state.gameCrashWinRate !== undefined ? state.gameCrashWinRate : 48);
       
-      // Calculate house edge. If winRate is 48 (meaning 48% chance to win 2x), RTP is 0.96 (4% edge)
-      // Base RTP = (currentWinRate / 50) * 0.96 -> roughly matches previous logic.
-      // Easiest edge representation: edge = 1.0 - (currentWinRate / 50)
       const rtp = Math.max(0.01, (currentWinRate / 50) * 0.96);
       const edge = 1 - rtp;
       
@@ -143,9 +140,9 @@ export default function Game() {
           if (r > edge) nextTarget = Math.max(1.01, rtp / rng());
           nextTarget = Math.min(500, parseFloat(nextTarget.toFixed(2))); // max 500x
           
-          const flightDuration = Math.log(nextTarget) * 5000;
-          const waitingDuration = 10000; // Increased to 10s based on request
-          const crashedDuration = 3000; 
+          const flightDuration = Math.log(nextTarget) * 4000;
+          const waitingDuration = 2200; // Fast 2.2s countdown for exciting instant pace
+          const crashedDuration = 900; // Swift 0.9s reset
           const totalDuration = waitingDuration + flightDuration + crashedDuration;
           
           if (current + totalDuration > now) {
@@ -158,7 +155,7 @@ export default function Game() {
               } else if (elapsed < waitingDuration + flightDuration) {
                   phase = 'flying';
                   const flightElapsed = elapsed - waitingDuration;
-                  multiplier = Math.pow(Math.E, flightElapsed / 5000);
+                  multiplier = Math.pow(Math.E, flightElapsed / 4000);
               } else {
                   phase = 'crashed';
                   multiplier = nextTarget;
@@ -173,19 +170,21 @@ export default function Game() {
           roundId++;
       }
       
-      setIsCrashed(phase === 'crashed');
-      if (phase === 'crashed' && !isCrashed) {
-        // crash sound removed
+      // Throttle React state updates to 30ms (~33fps) to avoid browser CPU stalls
+      if (now - lastRenderTick > 30) {
+        lastRenderTick = now;
+        setIsCrashed(phase === 'crashed');
+        setIsCrashFlying(phase === 'flying');
+        setCrashMultiplier(parseFloat(multiplier.toFixed(2)));
+        if (phase === 'waiting') {
+          setCrashTimeToStart(timeToStart);
+        }
       }
-
-      setIsCrashFlying(phase === 'flying');
-      setCrashMultiplier(multiplier);
-      setCrashTimeToStart(timeToStart);
-      setCrashHistory(history);
       
       if (roundId !== prevRoundId) {
           prevRoundId = roundId;
           setCrashRoundId(roundId);
+          setCrashHistory([...history]);
       }
       
       frameId = requestAnimationFrame(updateGame);
@@ -372,7 +371,7 @@ export default function Game() {
           description: `Won Coin Flip (${flipResult})`
         });
       }
-    }, 2000);
+    }, 220);
   };
 
   const handlePlayDice = async () => {
@@ -445,7 +444,7 @@ export default function Game() {
           description: `Won Dice Roll (${finalRoll} < ${diceTarget})`
         });
       }
-    }, 1500);
+    }, 200);
   };
 
   const handlePlaySlots = async () => {
@@ -548,24 +547,27 @@ export default function Game() {
          return mult;
       };
 
-      totalMultiplier = checkGridWays(newGrid);
-
-      // Enforce the forced win/loss outcome. This is a simulation trick.
-      let attempts = 0;
-      while ((shouldWin && totalMultiplier === 0) || (!shouldWin && totalMultiplier > 0)) {
-         if (attempts > 50) break; // Fallback to avoid infinite loops
-         for (let r=0; r<3; r++) {
-            for (let c=0; c<5; c++) {
-               newGrid[r][c] = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
-            }
-         }
-         totalMultiplier = checkGridWays(newGrid);
-         attempts++;
+      if (shouldWin) {
+        const winSym = slotSymbols[Math.floor(Math.random() * 4)];
+        const matchCols = Math.floor(Math.random() * 2) + 3;
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 5; c++) {
+            newGrid[r][c] = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
+          }
+        }
+        for (let c = 0; c < matchCols; c++) {
+          newGrid[1][c] = winSym;
+        }
+        totalMultiplier = (payouts[winSym] || 1.5) * (matchCols - 2);
+        isWin = true;
+      } else {
+        newGrid[0] = ['💎', 'A', 'K', 'Q', 'J'];
+        newGrid[1] = ['🍒', '🐴', '🤠', '💰', '💎'];
+        newGrid[2] = ['J', 'Q', 'K', 'A', '🍒'];
+        totalMultiplier = 0;
+        isWin = false;
       }
 
-      // if still didn't match (unlikely, but possible), accept reality.
-      isWin = totalMultiplier > 0;
-      // Cap multiplier for safety in simulation
       totalMultiplier = Math.min(totalMultiplier, 500);
 
       setSlotsResult(newGrid);
@@ -575,7 +577,7 @@ export default function Game() {
       else playSound('lose');
       setIsSpinning(false);
 
-      if (isWin) {
+      if (isWin && totalMultiplier > 0) {
         const winAmount = amount * totalMultiplier; 
         await store.updateUser(user.id, {
           balance: (store.getState().users.find(u => u.id === user.id)?.balance || user.balance) + winAmount
@@ -589,7 +591,7 @@ export default function Game() {
           description: `Won Mega Slots (${totalMultiplier.toFixed(2)}x)`
         });
       }
-    }, 2000);
+    }, 300);
   };
 
   const handlePlayWheel = async () => {
@@ -639,8 +641,8 @@ export default function Game() {
 
       // Calculate rotation
       const sliceAngle = 360 / segments.length;
-      // Add extra spins + land on segment
-      const targetRotation = wheelRotation + (360 * 5) + (segmentIndex * sliceAngle) + (sliceAngle / 2);
+      // 3 spins for snappy feel
+      const targetRotation = wheelRotation + (360 * 3) + (segmentIndex * sliceAngle) + (sliceAngle / 2);
 
       setWheelRotation(targetRotation);
       setWheelMultiplier(finalMult);
@@ -666,7 +668,7 @@ export default function Game() {
           description: `Won Spin Wheel (${finalMult.toFixed(2)}x)`
         });
       }
-    }, 4000); // 4 seconds spinning
+    }, 650);
   };
 
   const state = store.getState();

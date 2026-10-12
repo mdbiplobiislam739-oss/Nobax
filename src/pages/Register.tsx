@@ -41,7 +41,7 @@ export default function Register() {
     const isOwner = cleanEmail.toLowerCase() === 'mdbiplobiislam739@gmail.com';
 
     if (isOwner && password !== 'biplobBIPLOB12') {
-      setError('ওনার অ্যাকাউন্টের নির্দিষ্ট পাসওয়ার্ড হলো biplobBIPLOB12');
+      setError('Owner account requires the designated password: biplobBIPLOB12');
       return;
     }
 

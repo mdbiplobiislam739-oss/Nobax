@@ -37,7 +37,7 @@ export default function Login() {
         sessionStorage.setItem('novax_owner_unlocked', 'true');
       }
     } catch (e: any) {
-      setError(e.message || 'লগইন করতে ব্যর্থ হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।');
+      setError(e.message || 'Login failed. Please check your credentials and retry.');
     }
     setIsSubmitting(false);
   };

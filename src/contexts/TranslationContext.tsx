@@ -688,11 +688,23 @@ const TranslationContext = createContext<TranslationContextType | null>(null);
 
 export function TranslationProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>(() => {
-    return (localStorage.getItem('appLang') as Language) || 'English';
+    const explicitFlag = localStorage.getItem('userExplicitlyPickedBengali');
+    const saved = localStorage.getItem('appLang');
+    if (saved === 'Hindi') return 'Hindi';
+    if (saved === 'Bengali' && explicitFlag === 'true') {
+      return 'Bengali';
+    }
+    // Clean English as standard default so UI is universally readable
+    return 'English';
   });
 
   useEffect(() => {
     localStorage.setItem('appLang', language);
+    if (language === 'Bengali') {
+      localStorage.setItem('userExplicitlyPickedBengali', 'true');
+    } else {
+      localStorage.removeItem('userExplicitlyPickedBengali');
+    }
   }, [language]);
 
   const t = (key: string): string => {

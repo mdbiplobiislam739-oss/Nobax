@@ -270,18 +270,18 @@ export default function Mining() {
           </div>
           <div className="space-y-1">
             <h3 className="text-base font-bold text-white">
-              {t("No NFT miners owned yet")}
+              No Active NFT Miners Yet
             </h3>
             <p className="text-xs text-text-muted max-w-sm mx-auto leading-relaxed">
-              মাইনিং পেজে শুধুমাত্র আপনার কেনা এনএফটি মাইনিং করবে। মাইনিং শুরু করতে ভিআইপি পেজ থেকে আপনার পছন্দের এনএফটি রিগ কিনুন!
+              NFT miners generate daily automated XRP mining rewards. Assigned NFT rigs will automatically appear here ready to mine.
             </p>
           </div>
           <button
-            onClick={() => navigate("/vip")}
+            onClick={() => navigate("/nft")}
             className="px-6 py-3 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-black font-black text-xs rounded-2xl shadow-lg shadow-[#00ffff]/20 hover:opacity-95 active:scale-95 transition-all inline-flex items-center gap-2"
           >
-            <ShoppingBag size={15} />
-            <span>{t("Explore NFTs")} (VIP Page)</span>
+            <Cpu size={15} />
+            <span>View NFT Inventory</span>
             <ArrowRight size={14} />
           </button>
         </div>
@@ -519,25 +519,19 @@ export default function Mining() {
             )}
           </div>
 
-          {/* NFT Marketplace & Rigs Box */}
+          {/* Mining Hashrate Network Info */}
           <div className="bg-gradient-to-r from-[#00ffff]/10 via-[#0b1526] to-brand-gold/10 border border-[#00ffff]/30 rounded-3xl p-4 flex items-center justify-between gap-3 shadow-xl">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-[#00ffff]/20 border border-[#00ffff]/40 flex items-center justify-center text-[#00ffff]">
-                <Sparkles size={20} />
+                <Cpu size={20} />
               </div>
               <div>
-                <h4 className="text-xs font-black text-white">{t("NFT Marketplace")}</h4>
+                <h4 className="text-xs font-black text-white">Cloud Mining Hash Power</h4>
                 <p className="text-[10px] text-text-muted leading-tight">
-                  {t("Collect 30+ exclusive NFT rigs, boost your mining hashrate and earn passive XRP")}
+                  High-efficiency parallel rig mining network with 24/7 automated XRP yield settlement
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => navigate("/nft")}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#00ffff] to-cyan-400 text-black font-black text-xs hover:opacity-90 transition-all shrink-0 shadow-md"
-            >
-              NFT Market &rarr;
-            </button>
           </div>
         </div>
       )}

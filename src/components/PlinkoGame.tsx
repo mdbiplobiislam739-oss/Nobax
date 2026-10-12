@@ -60,7 +60,7 @@ export default function PlinkoGame({ betAmount, onError }: { betAmount: string; 
                 });
                 store.updateUser(user.id, { balance: user.balance + winAmount });
             }
-        }, 1500);
+        }, 280);
     };
 
     return (
@@ -74,7 +74,7 @@ export default function PlinkoGame({ betAmount, onError }: { betAmount: string; 
                    {[...Array(12)].map((_, row) => (
                        <div key={row} className="flex gap-4">
                            {[...Array(row + 3)].map((_, col) => (
-                               <div key={col} className="w-2 h-2 rounded-full bg-white/20 shadow-[0_0_5px_rgba(255,255,255,0.3)]"></div>
+                               <div key={col} className="w-2 h-2 rounded-full bg-pink-400/40 shadow-[0_0_6px_rgba(236,72,153,0.5)]"></div>
                            ))}
                        </div>
                    ))}

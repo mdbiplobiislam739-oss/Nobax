@@ -132,57 +132,51 @@ export default function JackpotGame() {
     store.updateUser(user.id, { balance: balanceAfterBet });
     refreshUser();
 
-    // Sound and animation simulation while calling server API
     try {
-      const response = await fetch('/api/game/jackpot/spin', {
+      const symbols = ['7️⃣', '💎', '👑', '⭐', '🔔', '🍒'];
+      const r = Math.random();
+      let mult = 0;
+      let tier = 'No Win';
+      let rReels = [
+        symbols[Math.floor(Math.random() * symbols.length)],
+        symbols[Math.floor(Math.random() * symbols.length)],
+        symbols[Math.floor(Math.random() * symbols.length)],
+      ];
+
+      if (r < 0.06) {
+        rReels = ['7️⃣', '7️⃣', '7️⃣'];
+        mult = 250;
+        tier = '777 GRAND JACKPOT';
+      } else if (r < 0.16) {
+        rReels = ['💎', '💎', '💎'];
+        mult = 50;
+        tier = 'DIAMOND MAJOR';
+      } else if (r < 0.32) {
+        rReels = ['👑', '👑', '👑'];
+        mult = 20;
+        tier = 'CROWN MINOR';
+      } else if (r < 0.52) {
+        rReels[1] = rReels[0];
+        mult = 2.5;
+        tier = 'LUCKY PAIR';
+      }
+
+      const data = {
+        reels: rReels,
+        multiplier: mult,
+        jackpotTier: tier,
+        winAmount: Number((bet * mult).toFixed(2)),
+        isWin: mult > 0,
+      };
+
+      // Parallel background report to server
+      fetch('/api/game/jackpot/spin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ betAmount: bet }),
-      });
+      }).catch(() => {});
 
-      let data;
-      const ct = response.headers.get('content-type');
-      if (response.ok && ct && ct.includes('application/json')) {
-        data = await response.json();
-      } else {
-        // Client fallback RNG
-        const symbols = ['7️⃣', '💎', '👑', '⭐', '🔔', '🍒'];
-        const r = Math.random();
-        let mult = 0;
-        let tier = 'No Win';
-        let rReels = [
-          symbols[Math.floor(Math.random() * symbols.length)],
-          symbols[Math.floor(Math.random() * symbols.length)],
-          symbols[Math.floor(Math.random() * symbols.length)],
-        ];
-
-        if (r < 0.05) {
-          rReels = ['7️⃣', '7️⃣', '7️⃣'];
-          mult = 250;
-          tier = '777 GRAND JACKPOT';
-        } else if (r < 0.15) {
-          rReels = ['💎', '💎', '💎'];
-          mult = 50;
-          tier = 'DIAMOND MAJOR';
-        } else if (r < 0.3) {
-          rReels = ['👑', '👑', '👑'];
-          mult = 20;
-          tier = 'CROWN MINOR';
-        } else if (r < 0.5) {
-          rReels[1] = rReels[0];
-          mult = 2.5;
-          tier = 'LUCKY PAIR';
-        }
-        data = {
-          reels: rReels,
-          multiplier: mult,
-          jackpotTier: tier,
-          winAmount: Number((bet * mult).toFixed(2)),
-          isWin: mult > 0,
-        };
-      }
-
-      // Spin reel animation delay (1.2 seconds for great casino feedback)
+      // Fast 350ms reel spin for instant casino responsiveness
       setTimeout(() => {
         setReels(data.reels);
         setIsSpinning(false);
@@ -230,7 +224,7 @@ export default function JackpotGame() {
           setWinMsg({ tier: 'Try Again', amount: 0, isWin: false });
         }
         refreshUser();
-      }, 1200);
+      }, 350);
     } catch (err: any) {
       setIsSpinning(false);
       setError(err.message || 'Error spinning jackpot');

@@ -56,17 +56,17 @@ export function AppLayout() {
             <img src={novaxLogo} alt="NovaX Logo" className="w-10 h-10 rounded-full object-cover border border-brand-primary/40" />
             <button
               onClick={() => setIsLangModalOpen(true)}
-              className="flex items-center gap-1 px-2.5 py-1 bg-white/10 hover:bg-white/15 border border-white/15 rounded-full text-xs font-bold text-white transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-1 px-2.5 py-1 bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/70 rounded-full text-xs font-bold text-white transition-all shadow-sm active:scale-95"
             >
               <span>{language === 'Bengali' ? '🇧🇩 বাং' : language === 'Hindi' ? '🇮🇳 हिं' : '🇺🇸 Eng'}</span>
             </button>
           </div>
-          <div className="flex items-center gap-3">
-             <button onClick={handleMuteToggle} className="relative p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors text-white">
-               {muted ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          <div className="flex items-center gap-2">
+             <button onClick={handleMuteToggle} className="relative p-2 bg-slate-800/80 border border-slate-700/70 rounded-full hover:bg-slate-700/80 transition-colors text-white">
+               {muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
              </button>
-             <button onClick={() => navigate('/notifications')} className="relative p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
-               <Bell size={18} />
+             <button onClick={() => navigate('/notifications')} className="relative p-2 bg-slate-800/80 border border-slate-700/70 rounded-full hover:bg-slate-700/80 transition-colors text-white">
+               <Bell size={17} />
                {/* If we had unread logic, we could show a dot here */}
                <span className="absolute top-1 right-1 w-2 h-2 bg-brand-primary rounded-full"></span>
              </button>

@@ -32,6 +32,8 @@ import {
   Plus,
   Pencil,
   Tag,
+  Upload,
+  Image as ImageIcon,
 } from 'lucide-react';
 import novaxLogo from '../../assets/images/novax_logo_1782982838843.jpg';
 
@@ -103,10 +105,12 @@ export default function AdminDashboard() {
   const [editingNft, setEditingNft] = useState<NFTItem | null>(null);
   const [quickPriceNft, setQuickPriceNft] = useState<NFTItem | null>(null);
   const [quickPriceVal, setQuickPriceVal] = useState('');
+  const [nftAssignTarget, setNftAssignTarget] = useState<'user' | 'marketplace'>('user');
+  const [nftTargetUserId, setNftTargetUserId] = useState<string>('');
 
   // NFT Form states
   const [nftFormTitle, setNftFormTitle] = useState('');
-  const [nftFormPrice, setNftFormPrice] = useState('25');
+  const [nftFormPrice, setNftFormPrice] = useState('0');
   const [nftFormTier, setNftFormTier] = useState('Legendary');
   const [nftFormPower, setNftFormPower] = useState('+250 GH/s');
   const [nftFormRate, setNftFormRate] = useState('2.5');
@@ -147,15 +151,53 @@ export default function AdminDashboard() {
     { name: 'Legendary Phoenix', url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80' },
   ];
 
+  const handlePhotoFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 8 * 1024 * 1024) {
+      setActionMsg({ text: 'Photo size too large (max 8MB)', type: 'error' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setNftFormImage(result);
+        if (!nftFormTitle.trim()) {
+          const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+          setNftFormTitle(cleanName);
+        }
+        setActionMsg({ text: 'Photo loaded successfully from device!', type: 'success' });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleOpenAddNft = () => {
     setNftFormTitle('');
-    setNftFormPrice('25');
+    setNftFormPrice('0');
     setNftFormTier('Legendary');
     setNftFormPower('+250 GH/s');
     setNftFormRate('2.5');
     setNftFormImage(PRESET_ARTWORKS[0].url);
     setNftFormDesc('High-performance cyberpunk rig generating daily passive XRP mining rewards.');
     setEditingNft(null);
+    setNftAssignTarget('user');
+    setNftTargetUserId(users[0]?.id || '');
+    setIsAddNftOpen(true);
+  };
+
+  const handleOpenAddNftForUser = (userItem: any) => {
+    setNftFormTitle(`${userItem.username}'s Rig`);
+    setNftFormPrice('0');
+    setNftFormTier('Legendary');
+    setNftFormPower('+350 GH/s');
+    setNftFormRate('3.5');
+    setNftFormImage(PRESET_ARTWORKS[0].url);
+    setNftFormDesc(`Direct NFT mining rig granted to ${userItem.username}.`);
+    setEditingNft(null);
+    setNftAssignTarget('user');
+    setNftTargetUserId(userItem.id);
     setIsAddNftOpen(true);
   };
 
@@ -168,6 +210,8 @@ export default function AdminDashboard() {
     setNftFormImage(nft.imageUrl);
     setNftFormDesc(nft.description || '');
     setEditingNft(nft);
+    setNftAssignTarget(nft.ownerId !== 'system' ? 'user' : 'marketplace');
+    setNftTargetUserId(nft.ownerId !== 'system' ? nft.ownerId : (users[0]?.id || ''));
     setIsAddNftOpen(true);
   };
 
@@ -177,16 +221,8 @@ export default function AdminDashboard() {
       setActionMsg({ text: 'Please enter NFT Title', type: 'error' });
       return;
     }
-    const price = parseFloat(nftFormPrice);
-    if (isNaN(price) || price < 0) {
-      setActionMsg({ text: 'Please enter a valid price in XRP', type: 'error' });
-      return;
-    }
-    const rate = parseFloat(nftFormRate);
-    if (isNaN(rate) || rate < 0) {
-      setActionMsg({ text: 'Please enter a valid daily mining rate in XRP', type: 'error' });
-      return;
-    }
+    const price = parseFloat(nftFormPrice) || 0;
+    const rate = parseFloat(nftFormRate) || 1.0;
 
     setIsSavingNft(true);
     setActionMsg(null);
@@ -203,22 +239,35 @@ export default function AdminDashboard() {
         });
         setActionMsg({ text: `NFT "${nftFormTitle}" updated successfully!`, type: 'success' });
       } else {
+        const isDirectToUser = nftAssignTarget === 'user' && Boolean(nftTargetUserId);
+        const targetUser = users.find((u) => u.id === nftTargetUserId);
+        const ownerId = isDirectToUser ? nftTargetUserId : 'system';
+        const status = isDirectToUser ? 'owned' : 'sale';
+
         await store.createNFT({
           title: nftFormTitle.trim(),
           price: price,
           tier: nftFormTier,
-          miningPower: nftFormPower.trim() || '+100 GH/s',
+          miningPower: nftFormPower.trim() || '+250 GH/s',
           dailyMiningRate: rate,
           imageUrl: nftFormImage.trim() || PRESET_ARTWORKS[0].url,
           description: nftFormDesc.trim(),
           creatorId: 'system',
-          ownerId: 'system',
-          status: 'sale',
-          isMining: false,
+          ownerId: ownerId,
+          status: status,
+          isMining: isDirectToUser,
           totalMined: 0,
           minedAccumulated: 0,
         });
-        setActionMsg({ text: `New NFT "${nftFormTitle}" added to Marketplace successfully!`, type: 'success' });
+
+        if (isDirectToUser && targetUser) {
+          setActionMsg({
+            text: `🎉 Successfully granted NFT "${nftFormTitle}" with photo directly to user ${targetUser.username}! It is active and mining XRP!`,
+            type: 'success',
+          });
+        } else {
+          setActionMsg({ text: `New NFT "${nftFormTitle}" added to Marketplace successfully!`, type: 'success' });
+        }
       }
       setIsAddNftOpen(false);
       setEditingNft(null);
@@ -269,12 +318,12 @@ export default function AdminDashboard() {
     try {
       await store.wipeAllUserData();
       setActionMsg({
-        text: 'সকল ইউজারের পূর্বের সব ডেটা (Users, Transactions, Deposits, Withdrawals, Bets, Stakes) সম্পূর্ণ মুছে ফেলা হয়েছে!',
+        text: 'All user data (Users, Transactions, Deposits, Withdrawals, Bets, Stakes) has been completely wiped!',
         type: 'success'
       });
       setShowWipeModal(false);
     } catch (err: any) {
-      setActionMsg({ text: 'ডেটা মুছতে ত্রুটি: ' + err.message, type: 'error' });
+      setActionMsg({ text: 'Error wiping data: ' + err.message, type: 'error' });
     } finally {
       setIsWiping(false);
     }
@@ -294,7 +343,7 @@ export default function AdminDashboard() {
       setUnlocked(true);
       setPassError('');
     } else {
-      setPassError('ভুল পাসওয়ার্ড! ওনার অ্যাকাউন্টের নির্দিষ্ট পাসওয়ার্ড হলো biplobBIPLOB12');
+      setPassError('Incorrect owner password! Please verify and try again.');
     }
   };
 
@@ -674,16 +723,16 @@ export default function AdminDashboard() {
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: DEPOSITS MANAGEMENT (ইউজারদের ডিপোজিট)                              */}
+      {/* TAB 1: DEPOSITS MANAGEMENT                                                 */}
       {/* ========================================================================= */}
       {tab === 'deposits' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <ArrowDownLeft size={20} className="text-brand-gold" /> ইউজার ডিপোজিট ম্যানেজমেন্ট
+                <ArrowDownLeft size={20} className="text-brand-gold" /> User Deposits Management
               </h2>
-              <p className="text-xs text-text-muted">সব ইউজারের ডিপোজিট রিকোয়েস্ট যাচাই ও ব্যালেন্স অনুমোদন করুন</p>
+              <p className="text-xs text-text-muted">Verify user deposit requests, confirm blockchain TxID and approve balances</p>
             </div>
 
             {/* Sub Filters */}
@@ -709,7 +758,7 @@ export default function AdminDashboard() {
               type="text"
               value={txSearch}
               onChange={(e) => setTxSearch(e.target.value)}
-              placeholder="ইউজারনেম, ট্রানজেকশন আইডি বা ওয়ালেট দিয়ে খুঁজুন..."
+              placeholder="Search by username, TxID, or wallet address..."
               className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-brand-gold"
             />
           </div>
@@ -717,7 +766,7 @@ export default function AdminDashboard() {
           {/* Deposits List */}
           {filteredDeposits.length === 0 ? (
             <div className="glass-panel p-8 rounded-2xl text-center text-xs text-text-muted border border-[var(--color-border-card)]">
-              কোনো ডিপোজিট ডাটা পাওয়া যায়নি।
+              No deposit records found.
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -762,13 +811,13 @@ export default function AdminDashboard() {
                             onClick={() => handleApproveDeposit(tx)}
                             className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
                           >
-                            <CheckCircle2 size={15} /> অনুমোদন (ব্যালেন্স যোগ)
+                            <CheckCircle2 size={15} /> Approve Deposit
                           </button>
                           <button
                             onClick={() => handleRejectDeposit(tx)}
                             className="px-3.5 py-2 bg-red-500/20 hover:bg-red-500/30 text-rose-400 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-red-500/30 active:scale-95 transition-all"
                           >
-                            <XCircle size={15} /> বাতিল
+                            <XCircle size={15} /> Reject
                           </button>
                         </div>
                       )}
@@ -801,16 +850,16 @@ export default function AdminDashboard() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 2: WITHDRAWALS MANAGEMENT (ইউজারদের উইথড্র)                            */}
+      {/* TAB 2: WITHDRAWALS MANAGEMENT                                              */}
       {/* ========================================================================= */}
       {tab === 'withdrawals' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <ArrowUpRight size={20} className="text-rose-400" /> ইউজার উইথড্র ম্যানেজমেন্ট
+                <ArrowUpRight size={20} className="text-rose-400" /> User Withdrawals Management
               </h2>
-              <p className="text-xs text-text-muted">উইথড্র রিকোয়েস্ট যাচাই করুন, পেমেন্ট পাঠান এবং পেইড মার্ক করুন</p>
+              <p className="text-xs text-text-muted">Verify withdrawal requests, transfer crypto and mark requests as completed</p>
             </div>
 
             {/* Sub Filters */}
@@ -836,7 +885,7 @@ export default function AdminDashboard() {
               type="text"
               value={txSearch}
               onChange={(e) => setTxSearch(e.target.value)}
-              placeholder="ইউজারনেম বা ওয়ালেট অ্যাড্রেস দিয়ে খুঁজুন..."
+              placeholder="Search by username or wallet address..."
               className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-xl py-2.5 pl-10 pr-4 text-xs text-white focus:outline-none focus:border-rose-400"
             />
           </div>
@@ -844,7 +893,7 @@ export default function AdminDashboard() {
           {/* Withdrawals List */}
           {filteredWithdraws.length === 0 ? (
             <div className="glass-panel p-8 rounded-2xl text-center text-xs text-text-muted border border-[var(--color-border-card)]">
-              কোনো উইথড্র ডাটা পাওয়া যায়নি।
+              No withdrawal records found.
             </div>
           ) : (
             <div className="space-y-2.5">
@@ -890,14 +939,14 @@ export default function AdminDashboard() {
                             onClick={() => handleApproveWithdraw(tx)}
                             className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-md active:scale-95 transition-all"
                           >
-                            <CheckCircle2 size={15} /> পেইড মার্ক করুন
+                            <CheckCircle2 size={15} /> Mark as Paid
                           </button>
                           <button
                             onClick={() => handleRejectWithdraw(tx)}
                             className="px-3.5 py-2 bg-red-500/20 hover:bg-red-500/30 text-rose-400 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-red-500/30 active:scale-95 transition-all"
-                            title="উইথড্র বাতিল করে ইউজারের অ্যাকাউন্টে ব্যালেন্স ফেরত দিন"
+                            title="Cancel withdrawal and refund user balance"
                           >
-                            <XCircle size={15} /> বাতিল ও রিফান্ড
+                            <XCircle size={15} /> Reject & Refund
                           </button>
                         </div>
                       )}
@@ -930,17 +979,17 @@ export default function AdminDashboard() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: GAME CONTROL (গেম কন্ট্রোল ও উইন রেট সেটিং)                         */}
+      {/* TAB 3: GAME CONTROL (Win Rates & House Edge Settings)                       */}
       {/* ========================================================================= */}
       {tab === 'games' && (
         <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Gamepad2 size={20} className="text-[#00FFFF]" /> গেম কন্ট্রোল সেন্টার (Win Rates & Settings)
+                <Gamepad2 size={20} className="text-[#00FFFF]" /> Game Control Center (Win Rates & Settings)
               </h2>
               <p className="text-xs text-text-muted">
-                প্ল্যাটফর্মের প্রতিটি গেমের উইন রেট (House Edge) এবং অন/অফ নিয়ন্ত্রণ করুন
+                Configure win rates (House Edge) and enable/disable individual casino mini-games
               </p>
             </div>
 
@@ -950,13 +999,13 @@ export default function AdminDashboard() {
               className="px-4 py-2.5 bg-gradient-to-r from-[#00FFFF] to-brand-primary text-black font-black text-xs rounded-xl shadow-lg hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
             >
               <CheckCircle2 size={16} />
-              {isSavingGames ? 'সেভ হচ্ছে...' : 'সেটিংস সেভ করুন (Save)'}
+              {isSavingGames ? 'Saving...' : 'Save Game Settings'}
             </button>
           </div>
 
           {/* Quick House Edge Presets */}
           <div className="glass-panel p-4 rounded-2xl border border-[var(--color-border-card)]">
-            <span className="text-[11px] font-bold text-white block mb-2">⚡ কুইক উইন রেট প্রিসেট (সব গেমের জন্য):</span>
+            <span className="text-[11px] font-bold text-white block mb-2">⚡ Quick Win Rate Presets (All Games):</span>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -1161,7 +1210,7 @@ export default function AdminDashboard() {
           {/* Game Enable/Disable Toggles */}
           <div className="glass-panel p-5 rounded-2xl border border-[var(--color-border-card)] space-y-3">
             <h3 className="font-bold text-xs text-white flex items-center gap-1.5">
-              <Zap size={14} className="text-brand-gold" /> গেম চালু/বন্ধ কন্ট্রোল (Enable / Disable Games):
+              <Zap size={14} className="text-brand-gold" /> Game Enable / Disable Control:
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
               {[
@@ -1199,16 +1248,16 @@ export default function AdminDashboard() {
                 disabled={isSavingGames}
                 className="px-6 py-2.5 bg-gradient-to-r from-[#00FFFF] to-brand-primary text-black font-black text-xs rounded-xl shadow-md hover:opacity-95"
               >
-                {isSavingGames ? 'সেভ হচ্ছে...' : 'সব গেম সেটিংস সংরক্ষণ করুন'}
+                {isSavingGames ? 'Saving...' : 'Save All Game Settings'}
               </button>
             </div>
           </div>
 
           {/* Recent Bets by Users */}
           <div className="glass-panel p-4 rounded-2xl border border-[var(--color-border-card)] space-y-3">
-            <h3 className="font-bold text-xs text-white">লাইভ ইউজার বেট হিস্ট্রি (Live Bets History)</h3>
+            <h3 className="font-bold text-xs text-white">Live User Bets History</h3>
             {bets.length === 0 ? (
-              <div className="text-center py-6 text-xs text-text-muted">এখনো কোনো গেম বেট রেকর্ড নেই।</div>
+              <div className="text-center py-6 text-xs text-text-muted">No game bet records yet.</div>
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto">
                 {bets.slice(0, 15).map((b) => (
@@ -1237,17 +1286,17 @@ export default function AdminDashboard() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: USERS DATABASE (ইউজার লিস্ট ও ব্যালেন্স পরিবর্তন)                    */}
+      {/* TAB 4: USERS DATABASE & DIRECT NFT ASSIGNMENT                               */}
       {/* ========================================================================= */}
       {tab === 'users' && (
         <div className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <Users size={20} className="text-brand-primary" /> ইউজার ডাটাবেজ ({users.length})
+                <Users size={20} className="text-brand-primary" /> User Database ({users.length})
               </h2>
               <p className="text-xs text-text-muted">
-                সব ইউজার রিয়েল ০.০০ ব্যালেন্সে শুরু করে। এখান থেকে ব্যালেন্স ও VIP টিয়ার পরিবর্তন করতে পারবেন।
+                Registered platform users. Edit balances, VIP tiers, or grant direct NFT miners with photos.
               </p>
             </div>
 
@@ -1257,7 +1306,7 @@ export default function AdminDashboard() {
                 type="text"
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                placeholder="ইউজারনেম বা ইমেইল খুঁজুন..."
+                placeholder="Search username or email..."
                 className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-xl py-2 pl-9 pr-3 text-xs text-white"
               />
             </div>
@@ -1292,7 +1341,15 @@ export default function AdminDashboard() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => handleOpenAddNftForUser(u)}
+                    className="px-3.5 py-2 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-slate-950 rounded-xl font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md shadow-[#00ffff]/20 flex items-center gap-1.5"
+                  >
+                    <Sparkles size={14} />
+                    <span>+ Give Direct NFT Photo</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       setEditingUser(u);
@@ -1301,7 +1358,7 @@ export default function AdminDashboard() {
                     }}
                     className="px-3.5 py-2 bg-brand-primary text-black rounded-xl font-bold text-xs hover:opacity-90 active:scale-95 transition-all shadow-md"
                   >
-                    ব্যালেন্স/VIP এডিট
+                    Edit Balance / VIP
                   </button>
                 </div>
               </div>
@@ -1313,7 +1370,7 @@ export default function AdminDashboard() {
             <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
               <div className="w-full max-w-sm bg-[var(--color-bg-card)] border border-brand-primary/40 rounded-3xl p-6 space-y-4 shadow-2xl">
                 <div className="flex justify-between items-center">
-                  <h3 className="font-bold text-sm text-white">ইউজার এডিট: {editingUser.username}</h3>
+                  <h3 className="font-bold text-sm text-white">Edit User: {editingUser.username}</h3>
                   <button onClick={() => setEditingUser(null)} className="text-text-muted hover:text-white text-xs">
                     ✕
                   </button>
@@ -1321,7 +1378,7 @@ export default function AdminDashboard() {
 
                 <div className="space-y-3 text-xs">
                   <div>
-                    <label className="text-[11px] text-text-muted block mb-1">সরাসরি ব্যালেন্স সেট করুন (XRP):</label>
+                    <label className="text-[11px] text-text-muted block mb-1">Set Balance Directly (XRP):</label>
                     <input
                       type="number"
                       step="any"
@@ -1333,7 +1390,7 @@ export default function AdminDashboard() {
 
                   {/* Quick Add Balance Buttons */}
                   <div>
-                    <span className="text-[10px] text-text-muted block mb-1">কুইক অ্যাড বাটন (+XRP):</span>
+                    <span className="text-[10px] text-text-muted block mb-1">Quick Add (+XRP):</span>
                     <div className="grid grid-cols-4 gap-1.5">
                       {[10, 50, 100, 500].map(add => (
                         <button
@@ -1349,7 +1406,7 @@ export default function AdminDashboard() {
                   </div>
 
                   <div>
-                    <label className="text-[11px] text-text-muted block mb-1">VIP লেভেল নির্ধারণ (0-8):</label>
+                    <label className="text-[11px] text-text-muted block mb-1">Set VIP Level (0-8):</label>
                     <select
                       value={editVip}
                       onChange={(e) => setEditVip(parseInt(e.target.value))}
@@ -1367,13 +1424,13 @@ export default function AdminDashboard() {
                     onClick={handleSaveUser}
                     className="flex-1 py-2.5 bg-brand-primary text-black font-bold rounded-xl text-xs hover:opacity-90"
                   >
-                    সংরক্ষণ করুন (Save)
+                    Save Changes
                   </button>
                   <button
                     onClick={() => setEditingUser(null)}
                     className="px-4 py-2.5 bg-white/10 text-white rounded-xl text-xs"
                   >
-                    বাতিল
+                    Cancel
                   </button>
                 </div>
               </div>
@@ -1383,31 +1440,31 @@ export default function AdminDashboard() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: ANNOUNCEMENTS & SETTINGS (নোটিশ ও সেটিংস)                          */}
+      {/* TAB 5: ANNOUNCEMENTS & SETTINGS                                             */}
       {/* ========================================================================= */}
       {tab === 'settings' && (
         <div className="space-y-4">
           <form onSubmit={handleAddNotice} className="glass-panel p-5 rounded-2xl border border-[var(--color-border-card)] space-y-3">
-            <h3 className="text-xs font-bold text-white">লাইভ নোটিশ ও নোটিফিকেশন পোস্ট করুন</h3>
+            <h3 className="text-xs font-bold text-white">Post Live Announcement & Notification</h3>
             <textarea
               rows={2}
               required
               value={noticeText}
               onChange={(e) => setNoticeText(e.target.value)}
-              placeholder="যেমন: NovaX প্ল্যাটফর্মে ফাস্ট ডিপোজিট ও ইনস্ট্যান্ট উইথড্র সুবিধা চালু আছে।"
+              placeholder="e.g. Fast deposits and instant withdrawals are active on NovaX platform."
               className="w-full bg-[var(--color-bg-base)] border border-white/20 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-brand-primary"
             />
             <button
               type="submit"
               className="px-4 py-2 bg-gradient-to-r from-brand-primary to-brand-gold text-black font-bold text-xs rounded-xl"
             >
-              ব্রডকাস্ট করুন
+              Broadcast Notice
             </button>
           </form>
 
           {/* Active Notices */}
           <div className="space-y-2">
-            <h4 className="text-xs font-bold text-text-muted px-1">বর্তমান নোটিশ সমূহ ({state.notices?.length || 0})</h4>
+            <h4 className="text-xs font-bold text-text-muted px-1">Active Announcements ({state.notices?.length || 0})</h4>
             {(state.notices || []).map((n) => (
               <div
                 key={n.id}
@@ -1417,7 +1474,7 @@ export default function AdminDashboard() {
                 <button
                   onClick={async () => {
                     await store.deleteNotice(n.id);
-                    setActionMsg({ text: 'নোটিশ ডিলিট করা হয়েছে', type: 'success' });
+                    setActionMsg({ text: 'Notice deleted successfully', type: 'success' });
                   }}
                   className="text-rose-400 hover:text-rose-300 text-[11px] shrink-0"
                 >
@@ -1431,10 +1488,10 @@ export default function AdminDashboard() {
           <div className="p-5 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-3">
             <div className="flex items-center gap-2 text-rose-400 font-bold text-sm">
               <Trash2 size={18} />
-              <span>ডেটা ম্যানেজমেন্ট ও রিসেট (Danger Zone)</span>
+              <span>System Reset & Data Management (Danger Zone)</span>
             </div>
             <p className="text-xs text-text-muted leading-relaxed">
-              পূর্বের সকল ইউজার অ্যাকাউন্ট, তাদের ব্যালেন্স, ডিপোজিট, উইথড্রয়াল, বেট এবং স্টেক হিস্ট্রি সম্পূর্ণ মুছে ফেলুন। এটি করার ফলে সম্পূর্ণ প্ল্যাটফর্ম নতুন করে ০.০০ ব্যালেন্সে ফ্রেশ শুরু হবে।
+              Permanently delete all existing user accounts, balances, deposits, withdrawals, bets, and stake history to reset the platform fresh to 0.00 balance.
             </p>
             <button
               type="button"
@@ -1448,7 +1505,8 @@ export default function AdminDashboard() {
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 5: NFT MARKETPLACE MANAGEMENT (এনএফটি অ্যাড ও প্রাইস পরিবর্তন)          */}
+      {/* ========================================================================= */}
+      {/* TAB 5: NFT MARKETPLACE MANAGEMENT                                          */}
       {/* ========================================================================= */}
       {tab === 'nfts' && (
         <div className="space-y-4">
@@ -1459,16 +1517,16 @@ export default function AdminDashboard() {
                 <span>NFT Marketplace & Price Manager</span>
               </h2>
               <p className="text-xs text-text-muted">
-                মার্কেটপ্লেসে নতুন NFT আর্টওয়ার্ক যুক্ত করুন এবং বর্তমান NFT এর দাম (Price) ও মাইনিং পাওয়ার পরিবর্তন করুন
+                Add new NFT mining artworks with direct photo uploads and configure daily mining returns
               </p>
             </div>
 
             <button
               onClick={handleOpenAddNft}
-              className="px-4 py-2.5 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-black font-extrabold text-xs rounded-xl shadow-lg shadow-[#00ffff]/20 hover:opacity-95 active:scale-95 transition-all flex items-center gap-1.5"
+              className="px-4 py-2.5 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-slate-950 font-black text-xs rounded-xl shadow-lg shadow-[#00ffff]/20 hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5"
             >
               <Plus size={16} />
-              <span>+ Add New NFT (নতুন NFT যোগ করুন)</span>
+              <span>+ Add New NFT</span>
             </button>
           </div>
 
@@ -1521,7 +1579,7 @@ export default function AdminDashboard() {
                   onClick={() => setNftTierFilter(t)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-all border ${
                     nftTierFilter === t
-                      ? 'bg-white text-black border-white shadow-md'
+                      ? 'bg-white text-slate-950 font-black border-white shadow-md'
                       : 'bg-white/5 text-text-muted border-white/10 hover:text-white'
                   }`}
                 >
@@ -1549,10 +1607,10 @@ export default function AdminDashboard() {
               .map((nft) => (
                 <div
                   key={nft.id}
-                  className="glass-panel p-3.5 rounded-2xl border border-[var(--color-border-card)] bg-[var(--color-bg-card)]/90 space-y-3 flex flex-col justify-between"
+                  className="glass-panel p-3.5 rounded-2xl border border-[var(--color-border-card)] bg-[var(--color-bg-card)]/90 space-y-3 flex flex-col justify-between shadow-md"
                 >
                   <div>
-                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black/60 mb-2">
+                    <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-black/60 mb-2 border border-white/10">
                       <img
                         src={nft.imageUrl}
                         alt={nft.title}
@@ -1579,7 +1637,7 @@ export default function AdminDashboard() {
 
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10 text-xs">
                       <div>
-                        <span className="text-[10px] text-text-muted block">Market Price (দাম)</span>
+                        <span className="text-[10px] text-text-muted block">Market Price</span>
                         <span className="font-mono font-extrabold text-brand-gold text-sm">
                           {formatXRP(nft.price)}
                         </span>
@@ -1601,26 +1659,26 @@ export default function AdminDashboard() {
                         setQuickPriceNft(nft);
                         setQuickPriceVal(nft.price.toString());
                       }}
-                      className="py-1.5 px-2 bg-brand-gold/15 hover:bg-brand-gold/25 border border-brand-gold/30 text-brand-gold rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all"
+                      className="py-1.5 px-2 bg-brand-gold/15 hover:bg-brand-gold/25 border border-brand-gold/30 text-brand-gold rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
                     >
                       <Tag size={11} />
-                      <span>দাম বদলান</span>
+                      <span>Set Price</span>
                     </button>
 
                     <button
                       onClick={() => handleOpenEditNft(nft)}
-                      className="py-1.5 px-2 bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all"
+                      className="py-1.5 px-2 bg-white/10 hover:bg-white/20 border border-white/15 text-white rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
                     >
                       <Pencil size={11} />
-                      <span>এডিট</span>
+                      <span>Edit</span>
                     </button>
 
                     <button
                       onClick={() => handleDeleteNft(nft)}
-                      className="py-1.5 px-2 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all"
+                      className="py-1.5 px-2 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-400 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95"
                     >
                       <Trash2 size={11} />
-                      <span>ডিলিট</span>
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
@@ -1637,7 +1695,7 @@ export default function AdminDashboard() {
               <div>
                 <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
                   <Tag size={16} className="text-brand-gold" />
-                  <span>Update NFT Price (NFT এর দাম পরিবর্তন)</span>
+                  <span>Update NFT Price</span>
                 </h3>
                 <p className="text-[11px] text-text-muted mt-0.5 truncate">{quickPriceNft.title}</p>
               </div>
@@ -1648,7 +1706,7 @@ export default function AdminDashboard() {
 
             <form onSubmit={handleSaveQuickPrice} className="space-y-3">
               <div>
-                <label className="text-[10px] text-text-muted block mb-1">New Price in XRP (নতুন দাম XRP-তে) *</label>
+                <label className="text-[10px] text-text-muted block mb-1">New Price in XRP *</label>
                 <input
                   type="number"
                   step="0.1"
@@ -1663,16 +1721,16 @@ export default function AdminDashboard() {
               <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-gradient-to-r from-brand-primary to-brand-gold text-black font-extrabold text-xs rounded-xl shadow-md"
+                  className="flex-1 py-2.5 bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black text-xs rounded-xl shadow-md hover:brightness-110 active:scale-95 transition-all"
                 >
-                  নতুন দাম সংরক্ষণ করুন (Save Price)
+                  Save Price
                 </button>
                 <button
                   type="button"
                   onClick={() => setQuickPriceNft(null)}
-                  className="px-4 py-2.5 bg-white/10 text-white rounded-xl text-xs font-semibold"
+                  className="px-4 py-2.5 bg-white/10 text-white rounded-xl text-xs font-semibold hover:bg-white/15"
                 >
-                  বাতিল (Cancel)
+                  Cancel
                 </button>
               </div>
             </form>
@@ -1687,16 +1745,79 @@ export default function AdminDashboard() {
             <div className="flex justify-between items-center">
               <h3 className="font-bold text-sm text-white flex items-center gap-1.5">
                 <Sparkles size={16} className="text-[#00ffff]" />
-                <span>{editingNft ? 'Edit NFT Details (NFT তথ্য পরিবর্তন)' : 'Add New NFT to Marketplace (নতুন NFT যোগ করুন)'}</span>
+                <span>
+                  {editingNft
+                    ? 'Edit NFT Details'
+                    : nftAssignTarget === 'user'
+                    ? '🎁 Grant NFT Rig Directly to User'
+                    : 'Add New NFT to Marketplace'}
+                </span>
               </h3>
               <button onClick={() => setIsAddNftOpen(false)} className="text-text-muted hover:text-white">
                 <XCircle size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleSaveNft} className="space-y-3 max-h-[75vh] overflow-y-auto pr-1">
+            <form onSubmit={handleSaveNft} className="space-y-3.5 max-h-[75vh] overflow-y-auto pr-1">
+              {/* Destination Selector */}
+              {!editingNft && (
+                <div className="p-3 rounded-2xl bg-black/40 border border-[#00ffff]/30 space-y-2">
+                  <label className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-[#00ffff]" />
+                    <span>NFT Destination *</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNftAssignTarget('user')}
+                      className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                        nftAssignTarget === 'user'
+                          ? 'bg-gradient-to-r from-[#00ffff] to-cyan-400 text-slate-950 font-black border-[#00ffff] shadow-md'
+                          : 'bg-white/5 text-gray-300 border-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span>🎁 Direct to User</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setNftAssignTarget('marketplace')}
+                      className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                        nftAssignTarget === 'marketplace'
+                          ? 'bg-gradient-to-r from-brand-primary to-orange-400 text-white font-black border-brand-primary shadow-md'
+                          : 'bg-white/5 text-gray-300 border-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span>🛒 Marketplace</span>
+                    </button>
+                  </div>
+
+                  {nftAssignTarget === 'user' && (
+                    <div className="pt-1.5">
+                      <label className="text-[10px] text-text-muted block mb-1 font-bold">
+                        Select Target User to Receive this NFT:
+                      </label>
+                      <select
+                        value={nftTargetUserId}
+                        onChange={(e) => setNftTargetUserId(e.target.value)}
+                        className="w-full bg-[var(--color-bg-base)] border border-[#00ffff]/40 rounded-xl px-3 py-2 text-xs text-white focus:border-[#00ffff] outline-none font-bold"
+                      >
+                        {users.map((u) => (
+                          <option key={u.id} value={u.id} className="bg-slate-900 text-white">
+                            {u.username} ({u.email}) - Bal: {formatXRP(u.balance || 0)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] text-emerald-400 mt-1 font-semibold">
+                        ✓ NFT will be placed directly in this user's account and start mining daily XRP!
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
-                <label className="text-[11px] text-text-muted block mb-1">NFT Title / Name (নাম) *</label>
+                <label className="text-[11px] text-text-muted block mb-1 font-bold">NFT Title / Name *</label>
                 <input
                   type="text"
                   required
@@ -1707,9 +1828,58 @@ export default function AdminDashboard() {
                 />
               </div>
 
+              {/* Direct Photo Uploader */}
+              <div className="p-3 rounded-2xl bg-black/40 border border-[#00ffff]/30 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-white flex items-center gap-1.5">
+                    <ImageIcon size={14} className="text-[#00ffff]" />
+                    <span>Upload NFT Photo (Direct from Phone / PC)</span>
+                  </label>
+                  {nftFormImage && (
+                    <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Photo Loaded
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer flex-1 py-2.5 px-3 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-slate-950 font-black text-xs rounded-xl shadow-md hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5 text-center">
+                    <Upload size={15} />
+                    <span>Choose Photo from Device / Gallery</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoFileUpload}
+                      className="hidden"
+                    />
+                  </label>
+
+                  {nftFormImage && (
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-black/60 border border-[#00ffff]/50 shrink-0 shadow-md">
+                      <img
+                        src={nftFormImage}
+                        alt="NFT Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-1">
+                  <span className="text-[10px] text-text-muted block mb-1">Or paste direct Image URL:</span>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={nftFormImage}
+                    onChange={(e) => setNftFormImage(e.target.value)}
+                    className="w-full bg-[var(--color-bg-base)] border border-white/10 rounded-xl px-3 py-1.5 text-[11px] text-white font-mono focus:border-[#00ffff] outline-none"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[11px] text-text-muted block mb-1">Price in XRP (দাম) *</label>
+                  <label className="text-[11px] text-text-muted block mb-1 font-bold">Price in XRP *</label>
                   <input
                     type="number"
                     step="0.1"
@@ -1722,7 +1892,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-text-muted block mb-1">Rarity / Tier (ক্যাটাগরি)</label>
+                  <label className="text-[11px] text-text-muted block mb-1 font-bold">Rarity / Tier</label>
                   <select
                     value={nftFormTier}
                     onChange={(e) => setNftFormTier(e.target.value)}
@@ -1738,7 +1908,7 @@ export default function AdminDashboard() {
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-[11px] text-text-muted block mb-1">Mining Power (মাইনিং পাওয়ার)</label>
+                  <label className="text-[11px] text-text-muted block mb-1 font-bold">Mining Power</label>
                   <input
                     type="text"
                     placeholder="+250 GH/s"
@@ -1749,7 +1919,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div>
-                  <label className="text-[11px] text-text-muted block mb-1">Daily Return (দৈনিক আয় XRP/d) *</label>
+                  <label className="text-[11px] text-text-muted block mb-1 font-bold">Daily Return (XRP/day) *</label>
                   <input
                     type="number"
                     step="0.05"
@@ -1762,24 +1932,12 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] text-text-muted block mb-1">Image URL (ছবির লিঙ্ক) *</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://..."
-                  value={nftFormImage}
-                  onChange={(e) => setNftFormImage(e.target.value)}
-                  className="w-full bg-[var(--color-bg-base)] border border-white/20 rounded-xl px-3 py-2 text-xs text-white font-mono focus:border-[#00ffff] outline-none"
-                />
-              </div>
-
               {/* 1-Click Preset Artwork Selector */}
               <div>
                 <label className="text-[10px] text-text-muted uppercase font-bold block mb-1.5">
-                  Or Pick From 30 Cyberpunk Presets (১-ক্লিকে ছবি নির্বাচন করুন)
+                  Or Pick From Cyberpunk Art Presets
                 </label>
-                <div className="grid grid-cols-4 gap-1.5 max-h-32 overflow-y-auto p-1 bg-black/40 rounded-xl border border-white/10">
+                <div className="grid grid-cols-4 gap-1.5 max-h-28 overflow-y-auto p-1 bg-black/40 rounded-xl border border-white/10">
                   {PRESET_ARTWORKS.map((preset) => (
                     <button
                       type="button"
@@ -1810,7 +1968,7 @@ export default function AdminDashboard() {
               </div>
 
               <div>
-                <label className="text-[11px] text-text-muted block mb-1">Description (বিবরণ)</label>
+                <label className="text-[11px] text-text-muted block mb-1 font-bold">Description</label>
                 <textarea
                   rows={2}
                   value={nftFormDesc}
@@ -1824,26 +1982,26 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={isSavingNft}
-                  className="flex-1 py-2.5 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-black font-extrabold text-xs rounded-xl shadow-lg hover:opacity-90 active:scale-95 transition-all flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2.5 bg-gradient-to-r from-[#00ffff] to-cyan-400 text-slate-950 font-black text-xs rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-1.5"
                 >
                   {isSavingNft ? (
                     <>
                       <RefreshCw size={14} className="animate-spin" />
-                      <span>সংরক্ষণ হচ্ছে...</span>
+                      <span>Saving...</span>
                     </>
                   ) : (
                     <>
                       <Check size={14} />
-                      <span>{editingNft ? 'আপডেট করুন (Update NFT)' : 'তৈরি ও প্রকাশ করুন (Create & Publish NFT)'}</span>
+                      <span>{editingNft ? 'Update NFT' : nftAssignTarget === 'user' ? '🎁 Grant NFT Photo to User' : 'Create & Publish NFT'}</span>
                     </>
                   )}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAddNftOpen(false)}
-                  className="px-4 py-2.5 bg-white/10 text-white rounded-xl text-xs font-semibold"
+                  className="px-4 py-2.5 bg-white/10 text-white rounded-xl text-xs font-semibold hover:bg-white/15"
                 >
-                  বাতিল (Cancel)
+                  Cancel
                 </button>
               </div>
             </form>

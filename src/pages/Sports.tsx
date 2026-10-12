@@ -5,7 +5,6 @@ import { store } from '../lib/store';
 import { formatXRP } from '../lib/utils';
 import {
   Trophy,
-  Activity,
   Clock,
   Search,
   CheckCircle2,
@@ -13,9 +12,9 @@ import {
   Coins,
   History,
   X,
-  Flame,
   Gamepad2,
-  Sparkles,
+  ChevronRight,
+  TrendingUp,
 } from 'lucide-react';
 import {
   fetchLiveMatches,
@@ -65,7 +64,7 @@ export default function Sports() {
     };
 
     loadAll();
-    const interval = setInterval(loadAll, 12000); // Poll fresh updates
+    const interval = setInterval(loadAll, 20000);
     return () => {
       mounted = false;
       clearInterval(interval);
@@ -152,101 +151,103 @@ export default function Sports() {
   const getSportBadge = (sport: SportType) => {
     switch (sport) {
       case 'football':
-        return { icon: '⚽', label: 'Football', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+        return { icon: '⚽', label: 'Football', color: 'text-emerald-400 bg-emerald-500/10' };
       case 'cricket':
-        return { icon: '🏏', label: 'Cricket', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
+        return { icon: '🏏', label: 'Cricket', color: 'text-amber-400 bg-amber-500/10' };
       case 'basketball':
-        return { icon: '🏀', label: 'Basketball', color: 'text-orange-400 bg-orange-500/10 border-orange-500/20' };
+        return { icon: '🏀', label: 'Basketball', color: 'text-orange-400 bg-orange-500/10' };
       case 'tennis':
-        return { icon: '🎾', label: 'Tennis', color: 'text-lime-400 bg-lime-500/10 border-lime-500/20' };
+        return { icon: '🎾', label: 'Tennis', color: 'text-lime-400 bg-lime-500/10' };
       case 'esports':
-        return { icon: '🎮', label: 'Esports', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' };
+        return { icon: '🎮', label: 'Esports', color: 'text-purple-400 bg-purple-500/10' };
       default:
-        return { icon: '🏆', label: 'Sports', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' };
+        return { icon: '🏆', label: 'Sports', color: 'text-cyan-400 bg-cyan-500/10' };
     }
   };
 
   return (
-    <div className="space-y-4 pt-2 pb-16">
-      {/* Top Banner */}
-      <div className="glass-panel p-4 rounded-3xl bg-gradient-to-br from-brand-primary/20 via-[var(--color-bg-card)] to-brand-gold/15 border border-brand-primary/30 shadow-xl flex justify-between items-center">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="p-2 bg-brand-primary/20 rounded-xl text-brand-primary">
+    <div className="space-y-3.5 pt-2 pb-28">
+      {/* Top Banner: Sleek Dark Sportsbook Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-[#0a1224] border border-slate-800/80 p-4 shadow-xl">
+        <div className="absolute top-0 right-0 w-36 h-36 bg-brand-primary/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="relative z-10 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-primary/15 flex items-center justify-center text-brand-primary shrink-0">
               <Trophy size={20} />
-            </span>
+            </div>
             <div>
-              <h1 className="text-base font-extrabold text-white tracking-wide">
+              <h1 className="text-base font-black text-white tracking-wide">
                 Sports Arena
               </h1>
-              <p className="text-[11px] text-text-muted">
-                {liveMatches.length} Live & {upcomingMatches.length} Upcoming Matches
+              <p className="text-[11px] text-text-muted mt-0.5">
+                {liveMatches.length} Live • {upcomingMatches.length} Upcoming Fixtures
               </p>
             </div>
           </div>
-        </div>
-        <div className="text-right">
-          <div className="text-[10px] text-text-muted uppercase font-bold tracking-wider">
-            Available Balance
-          </div>
-          <div className="font-extrabold text-brand-gold font-mono text-sm">
-            {formatXRP(user?.balance || 0)}
+          <div className="text-right">
+            <span className="text-[10px] text-text-muted uppercase font-bold tracking-wider block">
+              Balance
+            </span>
+            <span className="font-mono font-black text-brand-gold text-base">
+              {formatXRP(user?.balance || 0)}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* Mini-Games / Casino Shortcut Card */}
+      {/* Instant Casino Games Shortcut */}
       <div
         onClick={() => navigate('/game')}
-        className="cursor-pointer glass-panel p-3 rounded-2xl bg-gradient-to-r from-purple-950/50 via-[#0a1426] to-[#00ffff]/10 border border-[#00ffff]/30 flex items-center justify-between hover:border-[#00ffff] transition-all group"
+        className="cursor-pointer rounded-2xl bg-[#091326] border border-slate-800/80 p-3 flex items-center justify-between hover:bg-[#0c1830] transition-all group shadow-md"
       >
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-purple-400 group-hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-xl bg-purple-500/15 flex items-center justify-center text-purple-400 shrink-0">
             <Gamepad2 size={16} />
           </div>
           <div>
             <div className="text-xs font-bold text-white flex items-center gap-1.5">
-              <span>Play Instant Casino Games</span>
-              <span className="text-[9px] bg-red-500 text-white font-extrabold px-1.5 py-0.2 rounded-full">
+              <span>Instant Casino Games</span>
+              <span className="text-[9px] bg-red-500/20 text-red-400 font-black px-1.5 py-0.2 rounded-md">
                 HOT
               </span>
             </div>
             <div className="text-[10px] text-text-muted">
-              Crash, Mines, Slots, Dice & Wheel with instant multiplier payouts
+              Crash, Mines, Slots, Dice & Wheel with instant payouts
             </div>
           </div>
         </div>
-        <span className="text-xs text-[#00ffff] font-extrabold group-hover:translate-x-1 transition-transform">
-          Play &rarr;
-        </span>
+        <div className="flex items-center gap-1 text-xs text-[#00ffff] font-black group-hover:translate-x-0.5 transition-transform">
+          <span>Play</span>
+          <ChevronRight size={14} />
+        </div>
       </div>
 
       {msg && (
         <div
-          className={`p-3 rounded-2xl text-xs flex items-center justify-between border ${
+          className={`p-3 rounded-2xl text-xs flex items-center justify-between shadow-lg ${
             msg.type === 'success'
-              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-              : 'bg-rose-500/15 border-rose-500/30 text-rose-300'
+              ? 'bg-emerald-950/80 border border-emerald-500/30 text-emerald-300'
+              : 'bg-rose-950/80 border border-rose-500/30 text-rose-300'
           }`}
         >
           <div className="flex items-center gap-2">
             {msg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
             <span>{msg.text}</span>
           </div>
-          <button onClick={() => setMsg(null)} className="opacity-70 hover:opacity-100">
+          <button onClick={() => setMsg(null)} className="opacity-70 hover:opacity-100 p-1">
             <X size={14} />
           </button>
         </div>
       )}
 
-      {/* Main Tabs */}
-      <div className="grid grid-cols-3 gap-1.5 bg-[var(--color-bg-card)]/90 p-1.5 rounded-2xl border border-white/15 shadow-md">
+      {/* Main Tabs: Sleek Dark Segment Controller (No Harsh White Outlines) */}
+      <div className="grid grid-cols-3 gap-1 bg-[#070e1c] p-1 rounded-2xl border border-slate-800/80 shadow-md">
         <button
           onClick={() => setTab('live')}
-          className={`py-2 px-1 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
+          className={`py-2 px-1 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
             tab === 'live'
-              ? 'bg-gradient-to-r from-red-600 to-brand-primary text-white shadow-md font-extrabold border-red-500/50'
-              : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
+              ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-lg font-black'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
           <span className="relative flex h-2 w-2">
@@ -258,10 +259,10 @@ export default function Sports() {
 
         <button
           onClick={() => setTab('upcoming')}
-          className={`py-2 px-1 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
+          className={`py-2 px-1 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
             tab === 'upcoming'
-              ? 'bg-gradient-to-r from-brand-gold to-amber-300 text-slate-950 shadow-md font-extrabold border-amber-400'
-              : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
+              ? 'bg-gradient-to-r from-brand-gold to-amber-500 text-slate-950 shadow-lg font-black'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
           <Clock size={13} />
@@ -270,10 +271,10 @@ export default function Sports() {
 
         <button
           onClick={() => setTab('history')}
-          className={`py-2 px-1 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 border ${
+          className={`py-2 px-1 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
             tab === 'history'
-              ? 'bg-white/25 text-white shadow-md font-extrabold border-white/30'
-              : 'bg-white/5 border-white/10 text-gray-300 hover:text-white hover:bg-white/10'
+              ? 'bg-gradient-to-r from-brand-primary to-orange-500 text-white shadow-lg font-black'
+              : 'text-gray-400 hover:text-white'
           }`}
         >
           <History size={13} />
@@ -283,32 +284,34 @@ export default function Sports() {
 
       {tab !== 'history' && (
         <>
-          {/* Sport Category Filter Chips */}
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-1">
+          {/* Sport Filter Chips: Sleek Soft Pills (No harsh white outlines) */}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {[
               { id: 'all', label: 'All', icon: '🏆', count: activeMatches.length },
-              { id: 'football', label: 'Football', icon: '⚽', count: activeMatches.filter(m => m.sport === 'football').length },
-              { id: 'cricket', label: 'Cricket', icon: '🏏', count: activeMatches.filter(m => m.sport === 'cricket').length },
-              { id: 'basketball', label: 'Basketball', icon: '🏀', count: activeMatches.filter(m => m.sport === 'basketball').length },
-              { id: 'tennis', label: 'Tennis', icon: '🎾', count: activeMatches.filter(m => m.sport === 'tennis').length },
-              { id: 'esports', label: 'Esports', icon: '🎮', count: activeMatches.filter(m => m.sport === 'esports').length },
+              { id: 'football', label: 'Football', icon: '⚽', count: activeMatches.filter((m) => m.sport === 'football').length },
+              { id: 'cricket', label: 'Cricket', icon: '🏏', count: activeMatches.filter((m) => m.sport === 'cricket').length },
+              { id: 'basketball', label: 'Basketball', icon: '🏀', count: activeMatches.filter((m) => m.sport === 'basketball').length },
+              { id: 'tennis', label: 'Tennis', icon: '🎾', count: activeMatches.filter((m) => m.sport === 'tennis').length },
+              { id: 'esports', label: 'Esports', icon: '🎮', count: activeMatches.filter((m) => m.sport === 'esports').length },
             ].map((cat) => {
               const isSelected = selectedSport === cat.id;
               return (
                 <button
                   key={cat.id}
                   onClick={() => setSelectedSport(cat.id as any)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border active:scale-95 ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all active:scale-95 ${
                     isSelected
-                      ? 'bg-white text-slate-950 border-white shadow-md font-extrabold'
-                      : 'bg-white/10 text-gray-200 border-white/15 hover:bg-white/15 hover:text-white'
+                      ? 'bg-gradient-to-r from-brand-primary to-orange-500 text-white font-black shadow-md'
+                      : 'bg-[#091326] text-gray-300 hover:text-white border border-slate-800/80 hover:bg-[#0c1830]'
                   }`}
                 >
                   <span>{cat.icon}</span>
-                  <span>{cat.label}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
-                    isSelected ? 'bg-black/20 text-slate-950' : 'bg-white/15 text-white'
-                  }`}>
+                  <span className="font-bold">{cat.label}</span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono font-bold ${
+                      isSelected ? 'bg-black/30 text-white' : 'bg-slate-800 text-gray-300'
+                    }`}
+                  >
                     {cat.count}
                   </span>
                 </button>
@@ -316,23 +319,23 @@ export default function Sports() {
             })}
           </div>
 
-          {/* Search bar */}
+          {/* Search Bar */}
           <div className="relative">
             <Search
               size={15}
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500"
             />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search team, club, or tournament..."
-              className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border-card)] rounded-2xl pl-9 pr-4 py-2 text-xs text-white placeholder-text-muted outline-none focus:border-brand-primary"
+              className="w-full bg-[#091326] border border-slate-800/80 rounded-2xl pl-10 pr-9 py-2 text-xs text-white placeholder-gray-500 outline-none focus:border-brand-primary/60 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
               >
                 <X size={14} />
               </button>
@@ -341,29 +344,29 @@ export default function Sports() {
         </>
       )}
 
-      {/* Matches List or History */}
+      {/* Matches List / Bets History */}
       {tab === 'history' ? (
         <div className="space-y-2">
           {userBets.length === 0 ? (
-            <div className="glass-panel p-8 rounded-2xl text-center text-xs text-text-muted border border-[var(--color-border-card)]">
-              No sports bets placed yet. Check out the Live or Upcoming matches to place your first bet!
+            <div className="p-8 rounded-2xl text-center text-xs text-text-muted bg-[#091326] border border-slate-800/80">
+              No sports bets placed yet. Check out Live or Upcoming matches to place your first bet!
             </div>
           ) : (
             userBets.map((bet) => (
               <div
                 key={bet.id}
-                className="glass-panel p-3.5 rounded-2xl border border-[var(--color-border-card)] bg-[var(--color-bg-card)]/80 flex justify-between items-center"
+                className="p-3.5 rounded-2xl bg-[#091326] border border-slate-800/80 flex items-center justify-between text-xs shadow-md"
               >
                 <div className="min-w-0 pr-2">
-                  <div className="font-bold text-xs text-white truncate">
+                  <div className="font-bold text-white truncate text-xs">
                     {bet.game}
                   </div>
                   <div className="text-[10px] text-text-muted mt-0.5">
-                    Odds: <span className="text-brand-gold font-mono">{bet.multiplier}x</span> • Return: {formatXRP(bet.winAmount)}
+                    Odds: <span className="text-brand-gold font-mono font-bold">{bet.multiplier}x</span> • Return: {formatXRP(bet.winAmount)}
                   </div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-mono font-bold text-xs text-brand-primary">
+                  <div className="font-mono font-black text-xs text-brand-primary">
                     {formatXRP(bet.betAmount)}
                   </div>
                   <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-400">
@@ -380,7 +383,7 @@ export default function Sports() {
           <span className="text-xs text-text-muted">Loading live sports feeds...</span>
         </div>
       ) : filteredMatches.length === 0 ? (
-        <div className="glass-panel p-8 rounded-2xl text-center text-xs text-text-muted border border-[var(--color-border-card)]">
+        <div className="p-8 rounded-2xl text-center text-xs text-text-muted bg-[#091326] border border-slate-800/80">
           No matches found matching your filters. Try selecting "All" or clearing the search.
         </div>
       ) : (
@@ -393,13 +396,13 @@ export default function Sports() {
             return (
               <div
                 key={m.id}
-                className="glass-panel p-3.5 rounded-2xl border border-[var(--color-border-card)] bg-[var(--color-bg-card)]/90 hover:border-white/20 transition-all space-y-3"
+                className="p-3.5 rounded-2xl bg-[#0a1224] border border-slate-800/80 hover:border-slate-700 transition-all space-y-3 shadow-lg"
               >
-                {/* Header: Sport badge, League, and State */}
+                {/* Header: Sport badge & Status */}
                 <div className="flex items-center justify-between text-[11px]">
-                  <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1 ${badge.color}`}
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex items-center gap-1 ${badge.color}`}
                     >
                       <span>{badge.icon}</span>
                       <span>{badge.label}</span>
@@ -410,19 +413,19 @@ export default function Sports() {
                   </div>
 
                   {isLive ? (
-                    <span className="px-2 py-0.5 rounded-full font-bold uppercase text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center gap-1 animate-pulse">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                      {m.period} {m.timeMinutes ? `• ${m.timeMinutes}'` : m.overs ? `• ${m.overs} ov` : ''}
+                    <span className="px-2 py-0.5 rounded-full font-bold uppercase text-[9px] bg-red-500/15 text-red-400 flex items-center gap-1.5 animate-pulse">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      <span>{m.period} {m.timeMinutes ? `• ${m.timeMinutes}'` : m.overs ? `• ${m.overs} ov` : ''}</span>
                     </span>
                   ) : (
-                    <span className="px-2 py-0.5 rounded-full font-bold text-[9px] bg-white/10 text-brand-gold border border-brand-gold/20 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full font-bold text-[9px] bg-amber-500/10 text-brand-gold flex items-center gap-1">
                       <Clock size={10} />
-                      {m.timeFormatted || 'Pre-Match'}
+                      <span>{m.timeFormatted || 'Pre-Match'}</span>
                     </span>
                   )}
                 </div>
 
-                {/* Team Matchup & Score */}
+                {/* Team Matchup & Live Score */}
                 <div className="flex items-center justify-between gap-2 py-1">
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-xs text-white truncate text-left">
@@ -430,9 +433,9 @@ export default function Sports() {
                     </div>
                   </div>
 
-                  <div className="px-3 py-1 bg-black/40 rounded-xl border border-white/10 shrink-0 text-center">
+                  <div className="px-3 py-1 bg-[#060c18] rounded-xl shrink-0 text-center border border-slate-800">
                     {isLive ? (
-                      <div className="font-mono font-extrabold text-sm text-brand-gold tracking-widest">
+                      <div className="font-mono font-black text-sm text-brand-gold tracking-widest">
                         {m.score1 ?? 0} - {m.score2 ?? 0}
                       </div>
                     ) : (
@@ -449,14 +452,17 @@ export default function Sports() {
                   </div>
                 </div>
 
-                {/* Match Winner Odds Buttons */}
+                {/* Match Winner Odds Buttons (Sleek Dark Glass, No stark white outlines) */}
                 <div>
                   <div className="text-[10px] text-text-muted font-bold mb-1.5 uppercase tracking-wider flex justify-between">
                     <span>1X2 Match Winner</span>
-                    <span className="text-[9px] text-brand-gold">Instant Payout</span>
+                    <span className="text-[9px] text-brand-gold font-bold flex items-center gap-1">
+                      <TrendingUp size={10} />
+                      <span>Instant Settlement</span>
+                    </span>
                   </div>
                   <div
-                    className={`grid gap-1.5 ${
+                    className={`grid gap-2 ${
                       marketOutcomes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
                     }`}
                   >
@@ -467,27 +473,32 @@ export default function Sports() {
                       return (
                         <button
                           key={o.id}
-                          onClick={() =>
+                          onClick={() => {
+                            playSound('tick');
                             setSelectedBet({
                               match: m,
                               market: 'Match Winner',
                               outcome: o,
-                            })
-                          }
-                          className={`py-2 px-1.5 rounded-xl text-xs border text-center transition-all ${
+                            });
+                          }}
+                          className={`py-2 px-1.5 rounded-xl text-xs text-center transition-all ${
                             isSelected
-                              ? 'bg-gradient-to-r from-brand-primary to-brand-gold text-black border-transparent font-extrabold shadow-lg scale-[1.02]'
-                              : 'bg-black/40 border-white/10 text-white hover:border-white/30 hover:bg-white/5 active:scale-95'
+                              ? 'bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 text-slate-950 font-black shadow-lg shadow-orange-500/25 scale-[1.02]'
+                              : 'bg-[#060d1b] border border-slate-800/90 text-gray-200 hover:bg-[#0a1529] hover:border-slate-700 active:scale-95'
                           }`}
                         >
                           <div
                             className={`text-[10px] truncate ${
-                              isSelected ? 'text-black/80 font-bold' : 'text-text-muted'
+                              isSelected ? 'text-slate-950 font-black' : 'text-text-muted font-semibold'
                             }`}
                           >
                             {o.label}
                           </div>
-                          <div className="font-mono font-bold text-xs mt-0.5">
+                          <div
+                            className={`font-mono font-black text-xs mt-0.5 ${
+                              isSelected ? 'text-slate-950' : 'text-brand-gold'
+                            }`}
+                          >
                             {o.odds.toFixed(2)}x
                           </div>
                         </button>
@@ -501,92 +512,115 @@ export default function Sports() {
         </div>
       )}
 
-      {/* Interactive Bet Slip Bottom Sheet / Floating Panel */}
+      {/* Interactive Bet Slip Bottom Sheet with Dark Dim Backdrop (Completely eliminates background overlap) */}
       {selectedBet && (
-        <div className="fixed bottom-16 left-0 right-0 z-50 flex justify-center px-3">
-          <div className="w-full max-w-[400px] glass-panel p-4 rounded-3xl border border-brand-primary/50 bg-[#0c1427]/95 shadow-[0_-10px_35px_rgba(0,0,0,0.8)] backdrop-blur-xl space-y-3 animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Coins size={16} className="text-brand-primary" />
-                <span className="font-extrabold text-white text-xs tracking-wide">
-                  Active Bet Slip
-                </span>
-              </div>
-              <button
-                onClick={() => setSelectedBet(null)}
-                className="p-1 text-text-muted hover:text-white rounded-lg"
-              >
-                <X size={16} />
-              </button>
-            </div>
+        <>
+          {/* Dimmed Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 transition-opacity"
+            onClick={() => setSelectedBet(null)}
+          />
 
-            <div className="p-2.5 bg-white/5 rounded-2xl border border-white/10 text-xs flex justify-between items-center">
-              <div className="min-w-0 pr-2">
-                <div className="font-bold text-white truncate text-xs">
-                  {selectedBet.match.team1} vs {selectedBet.match.team2}
+          {/* Bottom Drawer */}
+          <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-0">
+            <div className="w-full max-w-[400px] bg-[#0c1527] border-t border-brand-primary/40 rounded-t-3xl shadow-[0_-15px_50px_rgba(0,0,0,0.95)] p-4 space-y-3 pb-safe pb-6 animate-in slide-in-from-bottom duration-200">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-brand-primary/20 flex items-center justify-center text-brand-primary">
+                    <Coins size={16} />
+                  </div>
+                  <div>
+                    <span className="font-black text-white text-xs tracking-wide">
+                      Active Bet Slip
+                    </span>
+                    <span className="text-[10px] text-emerald-400 font-bold ml-2">
+                      Ready to Place
+                    </span>
+                  </div>
                 </div>
-                <div className="text-[11px] text-brand-primary font-bold mt-0.5">
-                  Pick: {selectedBet.outcome.label}
-                </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-[10px] text-text-muted block">Odds</span>
-                <span className="font-mono font-extrabold text-brand-gold text-base">
-                  {selectedBet.outcome.odds.toFixed(2)}x
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Amount Selector Chips */}
-            <div className="flex gap-1.5">
-              {['5', '10', '25', '50', '100'].map((val) => (
                 <button
-                  key={val}
-                  onClick={() => setBetAmount(val)}
-                  className={`flex-1 py-1 rounded-xl text-[10px] font-bold border transition-all ${
-                    betAmount === val
-                      ? 'bg-brand-primary text-black border-brand-primary'
-                      : 'bg-white/5 text-text-muted border-white/10 hover:text-white'
-                  }`}
+                  onClick={() => setSelectedBet(null)}
+                  className="p-1.5 text-gray-400 hover:text-white rounded-lg bg-slate-800/60"
                 >
-                  +{val}
+                  <X size={15} />
                 </button>
-              ))}
-              <button
-                onClick={() =>
-                  setBetAmount(Math.floor(user?.balance || 0).toString())
-                }
-                className="px-2 py-1 bg-brand-gold/20 text-brand-gold border border-brand-gold/30 rounded-xl text-[10px] font-bold hover:bg-brand-gold/30"
-              >
-                MAX
-              </button>
-            </div>
-
-            <div className="flex gap-2 items-center">
-              <div className="relative flex-1">
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={betAmount}
-                  onChange={(e) => setBetAmount(e.target.value)}
-                  placeholder="Amount"
-                  className="w-full bg-black/60 border border-white/20 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none focus:border-brand-primary"
-                />
               </div>
 
-              <button
-                onClick={handlePlaceBet}
-                className="px-5 py-2.5 bg-gradient-to-r from-brand-primary to-brand-gold text-black font-extrabold text-xs rounded-xl hover:opacity-95 active:scale-95 transition-all shadow-lg flex items-center gap-1.5 shrink-0"
-              >
-                <span>Place Bet</span>
-                <span className="font-mono text-[11px]">
-                  ({formatXRP(Number(betAmount) * selectedBet.outcome.odds || 0)})
-                </span>
-              </button>
+              {/* Match Summary Box */}
+              <div className="p-3 bg-[#070e1c] rounded-2xl border border-slate-800 text-xs flex justify-between items-center">
+                <div className="min-w-0 pr-2">
+                  <div className="font-bold text-white truncate text-xs">
+                    {selectedBet.match.team1} vs {selectedBet.match.team2}
+                  </div>
+                  <div className="text-[11px] text-brand-primary font-bold mt-0.5">
+                    Pick: {selectedBet.outcome.label}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <span className="text-[9px] text-text-muted block uppercase font-bold">Odds</span>
+                  <span className="font-mono font-black text-brand-gold text-base">
+                    {selectedBet.outcome.odds.toFixed(2)}x
+                  </span>
+                </div>
+              </div>
+
+              {/* Quick Amount Selector Chips (No stark white outlines) */}
+              <div className="flex gap-1.5">
+                {['5', '10', '25', '50', '100'].map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => {
+                      playSound('tick');
+                      setBetAmount(val);
+                    }}
+                    className={`flex-1 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      betAmount === val
+                        ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 font-black shadow-md'
+                        : 'bg-[#070e1c] text-gray-300 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    +{val}
+                  </button>
+                ))}
+                <button
+                  onClick={() => {
+                    playSound('tick');
+                    setBetAmount(Math.floor(user?.balance || 0).toString());
+                  }}
+                  className="px-2.5 py-1.5 bg-brand-gold/15 text-brand-gold rounded-xl text-xs font-black hover:bg-brand-gold/25"
+                >
+                  MAX
+                </button>
+              </div>
+
+              {/* Amount Input & Place Bet Button */}
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={betAmount}
+                    onChange={(e) => setBetAmount(e.target.value)}
+                    placeholder="Amount"
+                    className="w-full bg-[#070e1c] border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white font-mono font-bold outline-none focus:border-brand-primary"
+                  />
+                </div>
+
+                <button
+                  onClick={handlePlaceBet}
+                  className="px-5 py-2.5 bg-gradient-to-r from-amber-400 via-orange-500 to-amber-400 text-slate-950 font-black text-xs rounded-xl hover:brightness-110 active:scale-95 transition-all shadow-lg shadow-orange-500/25 flex items-center gap-1.5 shrink-0"
+                >
+                  <span>Place Bet</span>
+                  <span className="font-mono text-[11px] font-black">
+                    ({formatXRP(Number(betAmount) * selectedBet.outcome.odds || 0)})
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

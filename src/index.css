@@ -4,18 +4,34 @@
   --color-brand-primary: #ff5a00;
   --color-brand-gold: #f59e0b;
   --color-text-muted: #94a3b8;
-  --color-bg-base: #070d1e;
-  --color-bg-card: #0f172a;
-  --color-border-card: #1e293b;
+  --color-bg-base: #060c1d;
+  --color-bg-card: #0b1528;
+  --color-border-card: #152238;
 }
 
 :root {
   --color-brand-primary: #ff5a00;
   --color-brand-gold: #f59e0b;
   --color-text-muted: #94a3b8;
-  --color-bg-base: #070d1e;
-  --color-bg-card: #0f172a;
-  --color-border-card: #1e293b;
+  --color-bg-base: #060c1d;
+  --color-bg-card: #0b1528;
+  --color-border-card: #152238;
+}
+
+body {
+  background-color: #060c1d;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Luxury Glassmorphism without harsh white borders ("সাদা দাগ") */
+.glass-panel {
+  background: rgba(11, 21, 40, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(30, 48, 80, 0.55);
 }
 
 .text-gradient-gold {
@@ -30,4 +46,27 @@
 
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Subtle, smooth borders to eliminate harsh white scratch lines */
+.border-white\/20,
+.border-white\/30 {
+  border-color: rgba(70, 95, 135, 0.35) !important;
+}
+
+.border-white\/10,
+.border-white\/15 {
+  border-color: rgba(50, 75, 115, 0.25) !important;
+}
+
+.border-white\/5 {
+  border-color: rgba(40, 65, 100, 0.18) !important;
+}
+
+/* Fast game rendering performance optimizations */
+.game-gpu-fast {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  will-change: transform, opacity;
 }

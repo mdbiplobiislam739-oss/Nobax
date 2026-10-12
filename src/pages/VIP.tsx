@@ -3,20 +3,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from '../contexts/TranslationContext';
 import { store, VIP_LEVELS } from '../lib/store';
 import { formatXRP, cn } from '../lib/utils';
-import { NFTItem } from '../types';
 import { playSuccessSound } from '../lib/audio';
 import {
   Crown,
   Zap,
-  ShoppingBag,
   Sparkles,
   CheckCircle2,
   AlertCircle,
-  Search,
-  ArrowRight,
   ShieldCheck,
-  Cpu,
-  Layers,
+  Award,
+  ChevronRight,
+  TrendingUp,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,10 +22,7 @@ export default function VIP() {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
-  const [activeTab, setActiveTab] = useState<'nfts' | 'vipLevels'>('nfts');
-  const [selectedRarity, setSelectedRarity] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [purchasingId, setPurchasingId] = useState<string | null>(null);
+  const [upgradingLevel, setUpgradingLevel] = useState<number | null>(null);
   const [msg, setMsg] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [, setTick] = useState(0);
 
@@ -38,156 +32,88 @@ export default function VIP() {
     return () => window.removeEventListener('store_updated', handleUpdate);
   }, []);
 
-  const state = store.getState();
-  const allNfts: NFTItem[] = (state.nfts || []).filter((n) => Boolean(n));
-
   const currentLevel = user?.vipLevel || 0;
+  const currentTierData = VIP_LEVELS.find((l) => l.level === currentLevel) || VIP_LEVELS[0];
 
-  // Filter photo NFTs with safe null checks
-  const filteredNfts = allNfts.filter((nft) => {
-    const tier = (nft?.tier || 'Common').toLowerCase();
-    // Rarity filter
-    if (selectedRarity !== 'all' && tier !== selectedRarity.toLowerCase()) {
-      return false;
-    }
-    // Search query
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      const title = (nft?.title || '').toLowerCase();
-      const power = (nft?.miningPower || '').toLowerCase();
-      return title.includes(q) || power.includes(q) || tier.includes(q);
-    }
-    return true;
-  });
-
-  const handleBuyNFT = async (nft: NFTItem) => {
+  const handleUpgradeVIP = async (targetLevel: number) => {
     if (!user) return;
-    if (nft.ownerId === user.id) {
-      navigate('/mining');
+    const targetData = VIP_LEVELS.find((l) => l.level === targetLevel);
+    if (!targetData) return;
+
+    if (targetLevel <= currentLevel) {
+      setMsg({ text: `You already unlocked VIP ${targetLevel}!`, type: 'success' });
       return;
     }
 
-    if (user.balance < nft.price) {
+    if (user.balance < targetData.price) {
       setMsg({
-        text: `${t('Insufficient balance')} (${formatXRP(user.balance)} / ${formatXRP(nft.price)})`,
+        text: `Insufficient balance (${formatXRP(user.balance)} / ${formatXRP(targetData.price)}). Please deposit XRP to upgrade.`,
         type: 'error',
       });
       return;
     }
 
-    setPurchasingId(nft.id);
+    setUpgradingLevel(targetLevel);
     setMsg(null);
     try {
-      await store.buyNFT(user.id, nft.id);
+      const newBal = user.balance - targetData.price;
+      await store.updateUser(user.id, {
+        vipLevel: targetLevel,
+        balance: newBal,
+      });
       await refreshUser();
       playSuccessSound();
       setMsg({
-        text: `${t('Purchased successfully')} (${nft.title})!`,
+        text: `Congratulations! Successfully upgraded to ${targetData.name}!`,
         type: 'success',
       });
     } catch (err: any) {
-      setMsg({ text: err.message || 'Error purchasing NFT', type: 'error' });
+      setMsg({ text: err.message || 'Upgrade failed', type: 'error' });
     } finally {
-      setPurchasingId(null);
-    }
-  };
-
-  const getRarityBadgeStyle = (tier?: string) => {
-    switch ((tier || 'Common').toLowerCase()) {
-      case 'common':
-        return 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
-      case 'rare':
-        return 'bg-cyan-500/20 text-cyan-400 border-cyan-500/40';
-      case 'epic':
-        return 'bg-purple-500/20 text-purple-400 border-purple-500/40';
-      case 'legendary':
-        return 'bg-amber-500/20 text-amber-400 border-amber-500/40 shadow-[0_0_10px_rgba(255,191,0,0.2)]';
-      default:
-        return 'bg-white/10 text-white border-white/20';
+      setUpgradingLevel(null);
     }
   };
 
   return (
     <div className="space-y-4 pt-2 pb-20">
-      {/* Top Banner Matching Photo Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c162d] via-[#091124] to-[#040915] border border-[#00ffff]/30 p-5 shadow-2xl">
-        <div className="absolute top-0 right-0 w-44 h-44 bg-[#00ffff]/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Top Banner: Dedicated VIP Club */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c162d] via-[#091124] to-[#040915] border border-brand-gold/40 p-5 shadow-2xl">
+        <div className="absolute top-0 right-0 w-48 h-48 bg-brand-gold/15 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-44 h-44 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="space-y-1">
-            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#00ffff]/20 text-[#00ffff] border border-[#00ffff]/30">
-              EXCLUSIVE NFT MARKET
+        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-brand-gold/20 text-brand-gold border border-brand-gold/40 inline-flex items-center gap-1.5">
+              <Crown size={12} />
+              VIP MEMBERSHIP CLUB
             </span>
             <h1 className="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
-              <span>{t('Buy NFT. Activate Mining. Earn Daily!')}</span>
+              <span>VIP Tier Privileges & Benefits</span>
             </h1>
             <p className="text-xs text-text-muted max-w-md leading-relaxed">
-              {t(
-                'Each NFT gives you a mining power. The higher the rarity, the more you earn. Collect, upgrade and grow your income!',
-              )}
+              Ascend VIP ranks to unlock increased daily task limits, automated rebate multipliers, priority settlements, and VIP rewards.
             </p>
           </div>
 
-          <div className="bg-black/50 border border-white/10 rounded-2xl p-3 shrink-0 text-right">
-            <span className="text-[10px] text-text-muted block">{t('My Balance')}</span>
-            <span className="text-base font-black text-brand-gold font-mono">
-              {formatXRP(user?.balance || 0)}
-            </span>
-            {(user?.balance || 0) < 15 && (
-              <button
-                onClick={async () => {
-                  if (!user) return;
-                  await store.claimDemoBalance(user.id, 50);
-                  await refreshUser();
-                  setMsg({ text: '+50 XRP Added to Test Balance!', type: 'success' });
-                }}
-                className="mt-1 px-2 py-0.5 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[9px] font-bold hover:bg-emerald-500/30 transition-all flex items-center gap-1 justify-center"
-              >
-                <Sparkles size={10} />
-                <span>+50 XRP Demo</span>
-              </button>
-            )}
+          <div className="bg-black/60 border border-slate-700/60 rounded-2xl p-3.5 shrink-0 min-w-[130px] text-right shadow-lg">
+            <div className="flex items-center justify-end gap-1.5 mb-1">
+              <Award size={13} className="text-brand-gold" />
+              <span className="text-[10px] font-bold text-brand-gold uppercase">Current Tier</span>
+            </div>
+            <div className="text-base font-black text-white font-mono">
+              VIP {currentLevel} • {currentTierData.name}
+            </div>
+            <div className="text-[10px] text-text-muted mt-0.5">
+              Daily: <span className="text-emerald-400 font-bold">{formatXRP(currentTierData.dailyIncome)}</span>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Main Tabs: Exclusive NFTs vs Membership Tiers */}
-      <div className="flex bg-[#0b1526] p-1 rounded-2xl border border-white/10">
-        <button
-          onClick={() => setActiveTab('nfts')}
-          className={cn(
-            'flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all',
-            activeTab === 'nfts'
-              ? 'bg-[#00ffff] text-black font-black shadow-lg shadow-[#00ffff]/20'
-              : 'text-text-muted hover:text-white',
-          )}
-        >
-          <Cpu size={15} />
-          <span>{t('NFT Market')}</span>
-          <span className="px-1.5 py-0.2 rounded-full bg-black text-[#00ffff] text-[9px] font-black">
-            {allNfts.length} NFTs
-          </span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('vipLevels')}
-          className={cn(
-            'flex-1 py-2.5 text-xs font-bold rounded-xl flex items-center justify-center gap-2 transition-all',
-            activeTab === 'vipLevels'
-              ? 'bg-brand-gold text-black font-black shadow-lg shadow-brand-gold/20'
-              : 'text-text-muted hover:text-white',
-          )}
-        >
-          <Crown size={15} />
-          <span>{t('VIP Membership')}</span>
-        </button>
       </div>
 
       {msg && (
         <div
           className={cn(
-            'p-3 rounded-2xl text-xs text-center border font-bold flex items-center justify-center gap-2',
+            'p-3 rounded-2xl text-xs text-center border font-bold flex items-center justify-center gap-2 shadow-lg',
             msg.type === 'success'
               ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400'
               : 'bg-rose-500/15 border-rose-500/30 text-rose-400',
@@ -195,248 +121,127 @@ export default function VIP() {
         >
           {msg.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
           <span>{msg.text}</span>
-          {msg.type === 'success' && (
-            <button
-              onClick={() => navigate('/mining')}
-              className="ml-2 px-2.5 py-1 bg-[#00ffff] text-black rounded-lg text-[10px] font-black uppercase hover:opacity-90"
-            >
-              Go to Mining &rarr;
-            </button>
-          )}
         </div>
       )}
 
-      {/* TAB 1: EXACT PHOTO NFTs MARKETPLACE */}
-      {activeTab === 'nfts' && (
-        <div className="space-y-4">
-          {/* Filters & Search Bar exactly like photo */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-              {['all', 'common', 'rare', 'epic', 'legendary'].map((rarity) => (
-                <button
-                  key={rarity}
-                  onClick={() => setSelectedRarity(rarity)}
-                  className={cn(
-                    'px-3.5 py-1.5 rounded-xl font-bold whitespace-nowrap transition-all uppercase text-[11px]',
-                    selectedRarity === rarity
-                      ? 'bg-white text-black shadow-md'
-                      : 'bg-white/5 text-text-muted hover:text-white border border-white/10',
-                  )}
-                >
-                  {rarity === 'all' ? t('All') : t(rarity.charAt(0).toUpperCase() + rarity.slice(1))}
-                </button>
-              ))}
-            </div>
+      {/* VIP Tiers List */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles size={14} className="text-brand-gold" />
+            <span>Membership Ranks & Requirements</span>
+          </h2>
+          <span className="text-[10px] text-text-muted">Total 9 VIP Ranks</span>
+        </div>
 
-            <div className="relative">
-              <Search
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted"
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('Search NFT...')}
-                className="w-full bg-[#0b1526] border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-text-muted outline-none focus:border-[#00ffff]/50 transition-colors"
-              />
-            </div>
-          </div>
+        {VIP_LEVELS.map((level) => {
+          const isCurrent = currentLevel === level.level;
+          const isUnlocked = currentLevel >= level.level;
+          const canUpgrade = currentLevel < level.level;
 
-          {/* Grid of the 10 NFTs from the photo */}
-          <div className="grid grid-cols-2 gap-3">
-            {filteredNfts.map((nft) => {
-              const isOwned = nft.ownerId === user?.id;
-
-              return (
-                <div
-                  key={nft.id}
-                  className="bg-[#0b1526] border border-white/10 hover:border-[#00ffff]/40 rounded-3xl p-3 flex flex-col justify-between transition-all group shadow-xl relative overflow-hidden"
-                >
-                  <div>
-                    {/* Artwork Container */}
-                    <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-black/60 mb-2.5">
-                      <img
-                        src={nft.imageUrl}
-                        alt={nft.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
-
-                      {/* Rarity Tag */}
-                      <div className="absolute top-2 left-2">
-                        <span
-                          className={cn(
-                            'text-[9px] font-black px-2 py-0.5 rounded-md border uppercase tracking-wider backdrop-blur-md',
-                            getRarityBadgeStyle(nft.tier),
-                          )}
-                        >
-                          {nft.tier}
-                        </span>
-                      </div>
-
-                      {/* Mining Power */}
-                      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-white bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md border border-white/10 flex items-center gap-1">
-                          <Zap size={10} className="text-brand-gold animate-pulse" />
-                          {nft.miningPower}
-                        </span>
-                      </div>
-                    </div>
-
-                    <h3 className="font-bold text-xs text-white truncate" title={nft.title}>
-                      {nft.title}
-                    </h3>
-
-                    <div className="mt-1 flex items-center justify-between text-[10px]">
-                      <span className="text-text-muted">Mining Power:</span>
-                      <span className="text-[#00ffff] font-mono font-bold">{nft.miningPower || '+40 GH/s'}</span>
-                    </div>
-
-                    <div className="mt-0.5 flex items-center justify-between text-[10px]">
-                      <span className="text-text-muted">Daily Return:</span>
-                      <span className="text-emerald-400 font-mono font-bold">
-                        +{nft.dailyMiningRate || 0.45} XRP/day
-                      </span>
-                    </div>
-
-                    <div className="mt-0.5 flex items-center justify-between text-[10px]">
-                      <span className="text-text-muted">Price:</span>
-                      <span className="text-brand-gold font-mono font-black">
-                        {formatXRP(nft.price)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-white/10">
-                    {isOwned ? (
-                      <button
-                        onClick={() => navigate('/mining')}
-                        className="w-full py-2 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-all"
-                      >
-                        <CheckCircle2 size={13} />
-                        <span>Active Miner</span>
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleBuyNFT(nft)}
-                        disabled={purchasingId === nft.id}
-                        className="w-full py-2 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:opacity-95 active:scale-95 text-white font-black text-xs rounded-xl shadow-lg transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
-                      >
-                        {purchasingId === nft.id ? (
-                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <ShoppingBag size={13} />
-                        )}
-                        <span>{t('Buy Now')}</span>
-                      </button>
+          return (
+            <div
+              key={level.level}
+              className={cn(
+                'p-4 rounded-2xl transition-all border relative overflow-hidden shadow-lg',
+                isCurrent
+                  ? 'bg-gradient-to-r from-brand-gold/15 via-[#0b1526] to-transparent border-brand-gold/70 shadow-[0_0_25px_rgba(255,200,0,0.15)] ring-1 ring-brand-gold/30'
+                  : isUnlocked
+                  ? 'bg-[#0b1526]/80 border-slate-800 opacity-75'
+                  : 'bg-[#0b1526]/60 border-slate-800 hover:border-brand-gold/40',
+              )}
+            >
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      'w-11 h-11 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border shadow-md',
+                      isCurrent
+                        ? 'bg-gradient-to-br from-brand-gold to-amber-500 text-slate-950 border-brand-gold'
+                        : isUnlocked
+                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                        : 'bg-slate-800 text-slate-300 border-slate-700',
                     )}
+                  >
+                    V{level.level}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-sm text-white">
+                        {level.name}
+                      </h3>
+                      {isCurrent && (
+                        <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-gold/25 text-brand-gold border border-brand-gold/40">
+                          Active Tier
+                        </span>
+                      )}
+                      {isUnlocked && !isCurrent && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                          Unlocked
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-[11px] text-text-muted mt-0.5">
+                      Daily Yield: <span className="text-emerald-400 font-bold font-mono">+{formatXRP(level.dailyIncome)}</span>
+                    </div>
                   </div>
                 </div>
-              );
-            })}
-          </div>
 
-          {/* Motivational Banner from bottom of photo */}
-          <div className="p-4 rounded-3xl bg-gradient-to-r from-purple-900/40 via-[#0b1526] to-[#00ffff]/10 border border-white/10 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400">
-                <Sparkles size={20} />
+                <div className="text-right shrink-0">
+                  <div className="font-mono font-black text-sm text-brand-gold">
+                    {level.price === 0 ? 'FREE' : formatXRP(level.price)}
+                  </div>
+                  <div className="text-[10px] text-text-muted">
+                    {level.validityDays} Days Validity
+                  </div>
+                </div>
               </div>
-              <div>
-                <h4 className="text-xs font-bold text-white">
-                  {t('Own a Rare NFT and Boost Your Mining Power!')}
-                </h4>
-                <p className="text-[10px] text-text-muted">
-                  Daily rewards earn USDT/XRP automatically every 24 hours.
-                </p>
+
+              <div className="mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3 text-text-muted text-[11px]">
+                  <span className="flex items-center gap-1">
+                    <Zap size={12} className="text-brand-primary" /> Max Daily Tasks: <b className="text-white">{level.maxTasks}</b>
+                  </span>
+                </div>
+
+                {isCurrent ? (
+                  <span className="text-brand-gold font-bold text-xs flex items-center gap-1">
+                    <ShieldCheck size={14} /> Active
+                  </span>
+                ) : isUnlocked ? (
+                  <span className="text-emerald-400 font-bold text-xs flex items-center gap-1">
+                    <CheckCircle2 size={13} /> Completed
+                  </span>
+                ) : (
+                  <button
+                    disabled={upgradingLevel === level.level}
+                    onClick={() => handleUpgradeVIP(level.level)}
+                    className="px-3 py-1 rounded-xl bg-gradient-to-r from-brand-gold to-amber-400 text-slate-950 font-black text-xs hover:brightness-110 active:scale-95 transition-all shadow-md shadow-brand-gold/20 flex items-center gap-1"
+                  >
+                    <span>{upgradingLevel === level.level ? 'Upgrading...' : `Upgrade (${formatXRP(level.price)})`}</span>
+                    <ChevronRight size={13} />
+                  </button>
+                )}
               </div>
             </div>
-            <button
-              onClick={() => navigate('/mining')}
-              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold shrink-0"
-            >
-              My Rigs &rarr;
-            </button>
+          );
+        })}
+      </div>
+
+      {/* VIP Perks Overview Footer */}
+      <div className="p-4 rounded-3xl bg-gradient-to-r from-brand-gold/10 via-[#0b1526] to-[#00ffff]/10 border border-slate-700/60 flex items-center justify-between gap-3 shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-brand-gold/20 border border-brand-gold/40 flex items-center justify-center text-brand-gold">
+            <TrendingUp size={20} />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-white">Daily Rebates & Fast Withdrawals</h4>
+            <p className="text-[10px] text-text-muted">
+              VIP membership includes expedited withdrawal processing and extra commission rebates.
+            </p>
           </div>
         </div>
-      )}
-
-      {/* TAB 2: VIP MEMBERSHIP LEVELS */}
-      {activeTab === 'vipLevels' && (
-        <div className="space-y-3">
-          {VIP_LEVELS.map((level) => {
-            const isCurrent = currentLevel === level.level;
-            const isUnlocked = currentLevel >= level.level;
-
-            return (
-              <div
-                key={level.level}
-                className={cn(
-                  'p-4 rounded-2xl transition-all border relative overflow-hidden',
-                  isCurrent
-                    ? 'bg-brand-gold/10 border-brand-gold/60 shadow-[0_0_20px_rgba(255,200,0,0.15)]'
-                    : isUnlocked
-                    ? 'bg-[var(--color-bg-card)]/50 border-white/10 opacity-70'
-                    : 'bg-[var(--color-bg-card)] border-[var(--color-border-card)] hover:border-brand-primary/40',
-                )}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={cn(
-                        'w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs',
-                        isCurrent ? 'bg-brand-gold text-black' : 'bg-white/10 text-white',
-                      )}
-                    >
-                      V{level.level}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                        {level.name}
-                        {isCurrent && (
-                          <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-gold">
-                            Active
-                          </span>
-                        )}
-                      </h3>
-                      <div className="text-[11px] text-text-muted mt-0.5">
-                        Daily: <span className="text-white font-semibold">{formatXRP(level.dailyIncome)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="font-bold text-sm text-brand-gold">
-                      {level.price === 0 ? 'FREE' : formatXRP(level.price)}
-                    </div>
-                    <div className="text-[10px] text-text-muted">
-                      {level.validityDays} Days Validity
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-[11px]">
-                  <span className="text-text-muted flex items-center gap-1">
-                    <Zap size={12} className="text-brand-primary" /> Daily Tasks: {level.maxTasks}
-                  </span>
-
-                  {isCurrent ? (
-                    <span className="text-brand-gold font-bold flex items-center gap-1">
-                      <ShieldCheck size={14} /> Active Tier
-                    </span>
-                  ) : (
-                    <span className="text-text-muted text-[10px]">
-                      Tier Upgrade
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      </div>
     </div>
   );
 }
